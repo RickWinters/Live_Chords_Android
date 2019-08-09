@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="active_font_colour">#B4B4B4</color>
+    <color name="inactive_font_colour">#969696</color>
+    <color name="artist_font_color">#5A5A5A</color>
+    <color name="background">#141414</color>
+    <color name="lyrics_field_background">#323232</color>
+</resources>
