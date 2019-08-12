@@ -7,13 +7,13 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
-public class Lyrics_updater extends AsyncTask<String, String, Void> {
+public class LyricsUpdater extends AsyncTask<String, String, Void> {
     private WeakReference<MainActivity> activityWeakReference;
     private TextView textView;
     private Connection connection = new Connection();
     private static final String TAG = "MYDEBUG_Lyrics_updater";
 
-    Lyrics_updater(MainActivity activity){
+    LyricsUpdater(MainActivity activity){
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
 

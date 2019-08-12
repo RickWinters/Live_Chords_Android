@@ -1,4 +1,4 @@
-package livechords.livechordsjava;
+package livechords.livechordsjava.Fragment_classes;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,11 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-public class SpotifyFragment extends Fragment {
+import livechords.livechordsjava.R;
+
+public class ContactFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_spotify, container, false);
+        return inflater.inflate(R.layout.fragment_contact, container, false);
     }
 }
 

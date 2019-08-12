@@ -26,6 +26,25 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.spotify.sdk.android.authentication.LoginActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+        
+        <activity android:name=".MySpotifyAuthenticationActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleInstance">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="andoird.intent.category.BROWSABLE"/>
+
+                <data
+                    android:host="login"
+                    android:scheme="androidlivechords://"/>
+            </intent-filter>
+        </activity>
+
     </application>
 
 

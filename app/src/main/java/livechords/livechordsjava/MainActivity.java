@@ -1,5 +1,6 @@
 package livechords.livechordsjava;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -15,29 +16,34 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
+import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
+import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.authentication.SpotifyNativeAuthUtil;
 
 import java.util.concurrent.ExecutionException;
 
+import livechords.livechordsjava.Fragment_classes.ContactFragment;
+import livechords.livechordsjava.Fragment_classes.HomeFragment;
+import livechords.livechordsjava.Fragment_classes.SpotifyFragment;
 import livechords.livechordsjava.Model.Tabsfile;
 
+import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private static final String TAG = "MYDEBUG_Main_Activity";
+    private static final int AUTH_TOKEN_REQUEST_CODE = 0x10;
     private DrawerLayout drawer;
     private TextView textView;
     private FrameLayout frameLayout;
     private NavigationView navigationView;
-    private Connection connection = new Connection();
     private Tabsfile tabsfile = new Tabsfile();
-    private String current_lyrics;
     private String current_artist = "Flogging_Molly";
     private String current_title = "Drunken_Lullabies";
 
-    private static final String CLIENT_ID = "cb3d87487c3f45678e4f28c0f1787d59";
-    private static final String REDIRECT_URI = "http:google.com/";
+    private static final String CLIENT_ID = "733d8f71031d4a9890f1940a1dddbab9";
+    private static final String REDIRECT_URI = "AndroidLiveChords://login";
     private AuthenticationRequest authenticationRequest;
     private SpotifyNativeAuthUtil spotifyNativeAuthUtil;
 
@@ -116,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void UpdateLyrics() {
         Log.d(TAG, "UpdateLyrics() called");
         String lyrics = GetLyrics(current_artist, current_title);
-        new Lyrics_updater(this).execute(lyrics);
+        new LyricsUpdater(this).execute(lyrics);
     }
 
     public void UpdateLyricsButton(View view) {
@@ -124,5 +130,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         textView = findViewById(R.id.fragment_lyrics_text);
         textView.setText("Lyrics are updating");
         UpdateLyrics();
+    }
+
+    public void SpotifyLogin(){
+        Log.d(TAG, "SpotifyLogin() called");
+        new SpotifyConnector(this).execute("authenticate");
+
+    }
+
+    public void SpotifyLoginButton(View view){
+        Log.d(TAG, "SpotifyLoginButton() called");
+        SpotifyLogin();
+    }
+
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        Log.d(TAG, "onActivityResult() called with: requestCode = [" + requestCode + "], resultCode = [" + resultCode + "], intent = [" + intent + "]");
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        // Check if result comes from the correct activity
+        if (requestCode == REQUEST_CODE) {
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+            switch (response.getType()) {
+                // Response was successful and contains auth token
+                case TOKEN:
+                    // Handle successful response
+                    String token = response.getAccessToken();
+                    break;
+
+                // Auth flow returned an error
+                case ERROR:
+                    // Handle error response
+                    break;
+
+                // Most likely auth flow was cancelled
+                default:
+                    // Handle other cases
+            }
+        }
     }
 }
