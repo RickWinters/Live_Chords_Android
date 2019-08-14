@@ -1,6 +1,8 @@
 package livechords.livechordsjava;
 
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -17,15 +19,14 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
-import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.authentication.SpotifyNativeAuthUtil;
 
 import java.util.concurrent.ExecutionException;
 
 import livechords.livechordsjava.Fragment_classes.ContactFragment;
 import livechords.livechordsjava.Fragment_classes.HomeFragment;
 import livechords.livechordsjava.Fragment_classes.SpotifyFragment;
+import livechords.livechordsjava.Model.CurrentSong;
 import livechords.livechordsjava.Model.Tabsfile;
 
 import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
@@ -33,19 +34,21 @@ import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private static final String TAG = "MYDEBUG_Main_Activity";
-    private static final int AUTH_TOKEN_REQUEST_CODE = 0x10;
+    //VIEWS
     private DrawerLayout drawer;
     private TextView textView;
     private FrameLayout frameLayout;
     private NavigationView navigationView;
+
+    //DATA FOR SONGS AND STUFF
     private Tabsfile tabsfile = new Tabsfile();
     private String current_artist = "Flogging_Molly";
     private String current_title = "Drunken_Lullabies";
+    private CurrentSong currentSong = new CurrentSong();
 
-    private static final String CLIENT_ID = "733d8f71031d4a9890f1940a1dddbab9";
-    private static final String REDIRECT_URI = "AndroidLiveChords://login";
-    private AuthenticationRequest authenticationRequest;
-    private SpotifyNativeAuthUtil spotifyNativeAuthUtil;
+    //DATA FOR SPOTIFY CONNECTION
+    private String accesToken = "";
+    private Boolean loggedIn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         switch(menuItem.getItemId()){
             case R.id.nav_home:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
-                UpdateLyrics();
+                //UpdateLyrics();
                 break;
             case R.id.nav_message:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ContactFragment()).commit();
@@ -102,12 +105,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-    //Function that given an artist and title returns
+    //Function that given an artist and title returns the lyrics
     private String GetLyrics(String artist, String title){
         Log.d(TAG, "GetLyrics() called with: artist = [" + artist + "], title = [" + title + "]");
         String lyrics = null;
         try {
-            String reply = new Connection().execute("getLyrics",artist,title).get();
+            String reply = new ServerConnection().execute("getLyrics", artist, title).get();
             tabsfile.ParseJsonstring(reply);
             lyrics = tabsfile.getLyrics();
         } catch (ExecutionException e) {
@@ -120,21 +123,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //Function that fills lyrics screen with lyrics
     public void UpdateLyrics() {
-        Log.d(TAG, "UpdateLyrics() called");
+        Log.d(TAG, "UpdateLyrics() called song" + current_artist + " - " + current_title);
         String lyrics = GetLyrics(current_artist, current_title);
-        new LyricsUpdater(this).execute(lyrics);
+        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, lyrics);
     }
 
     public void UpdateLyricsButton(View view) {
         Log.d(TAG, "UpdateLyricsButton() called with: view = [" + view + "]");
         textView = findViewById(R.id.fragment_lyrics_text);
         textView.setText("Lyrics are updating");
-        UpdateLyrics();
+        try {
+            if (!loggedIn) {
+                Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
+            } else {
+                currentSong = new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken).get();
+            }
+            if (!currentSong.getArtist().equals(current_artist) || !currentSong.getTitle().equals(current_title)) {
+                current_title = currentSong.getTitle();
+                current_artist = currentSong.getArtist();
+                UpdateLyrics();
+            }
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void SpotifyLogin(){
         Log.d(TAG, "SpotifyLogin() called");
-        new SpotifyConnector(this).execute("authenticate");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "authenticate");
+        } else {
+            new SpotifyConnector(this).execute("authenticate");
+        }
 
     }
 
@@ -142,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d(TAG, "SpotifyLoginButton() called");
         SpotifyLogin();
     }
-
 
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         Log.d(TAG, "onActivityResult() called with: requestCode = [" + requestCode + "], resultCode = [" + resultCode + "], intent = [" + intent + "]");
@@ -155,7 +176,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 // Response was successful and contains auth token
                 case TOKEN:
                     // Handle successful response
-                    String token = response.getAccessToken();
+                    Log.d(TAG, "onActivityResult: User logged in");
+                    accesToken = response.getAccessToken();
+                    loggedIn = true;
+                    new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
                     break;
 
                 // Auth flow returned an error
@@ -168,5 +192,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     // Handle other cases
             }
         }
+    }
+
+    public void setCurrent_artist(String current_artist) {
+        Log.d(TAG, "setCurrent_artist() called with: current_artist = [" + current_artist + "]");
+        this.current_artist = current_artist;
+    }
+
+    public void setCurrent_title(String current_title) {
+        Log.d(TAG, "setCurrent_title() called with: current_title = [" + current_title + "]");
+        this.current_title = current_title;
     }
 }

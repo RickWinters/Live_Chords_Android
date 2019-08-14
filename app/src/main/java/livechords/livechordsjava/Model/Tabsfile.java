@@ -21,7 +21,8 @@ public class Tabsfile {
 
 
     //CONTSTRUCTORS
-    public Tabsfile(){};
+    public Tabsfile() {
+    }
 
     public Tabsfile(String artist, String title, String tabs, boolean synced, ArrayList<Tabslines> tabslines, boolean has_tabs, boolean has_azlyrics, ArrayList<Chorded_lyrics> chorded_lyrics, String version, ArrayList<String> azlyrics){
         this.artist = artist;
@@ -48,13 +49,20 @@ public class Tabsfile {
             has_azlyrics = root.getBoolean("has_azlyrics");
             version = root.getString("version");
 
+            while (azlyrics.size() > 1) {
+                azlyrics.remove(1);
+            }
             JSONArray azlyric_array = root.getJSONArray("azlyrics");
-            for (int i = 1; i < azlyric_array.length(); i++){
+            for (int i = 0; i < azlyric_array.length(); i++) {
                 String item = (String) azlyric_array.get(i);
                 azlyrics.add(item);
             }
+
+            while (tabslines.size() > 1) {
+                tabslines.remove(1);
+            }
             JSONArray tabsline_array = root.getJSONArray("tabslines");
-            for (int i = 1; i < tabsline_array.length(); i++){
+            for (int i = 0; i < tabsline_array.length(); i++) {
                 JSONObject item = (JSONObject) tabsline_array.get(i);
                 Tabslines tabsline = new Tabslines();
                 tabsline.setChords(item.getBoolean("chords"));
@@ -65,8 +73,11 @@ public class Tabsfile {
                 tabslines.add(tabsline);
             }
 
+            while (chorded_lyrics.size() > 1) {
+                chorded_lyrics.remove(1);
+            }
             JSONArray chorded_lyric_array = root.getJSONArray("chorded_lyrics");
-            for (int i = 1; i < chorded_lyric_array.length(); i++){
+            for (int i = 0; i < chorded_lyric_array.length(); i++) {
                 JSONObject item = (JSONObject) chorded_lyric_array.get(i);
                 Chorded_lyrics chorded_lyric = new Chorded_lyrics();
                 chorded_lyric.setChords(item.getString("chords"));
@@ -77,7 +88,6 @@ public class Tabsfile {
                 chorded_lyric.setEnd(item.getDouble("end"));
                 chorded_lyrics.add(chorded_lyric);
             }
-            System.out.println(chorded_lyrics);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -174,10 +184,10 @@ public class Tabsfile {
     }
 
     public String getLyrics() {
-        String lyrics = "";
+        StringBuilder lyrics = new StringBuilder(artist.replace("%20", " ") + "\n" + title.replace("%20", " ") + "\n\n");
         for (int i = 0; i < chorded_lyrics.size(); i++){
-            lyrics += chorded_lyrics.get(i).getChords() + "\n" + chorded_lyrics.get(i).getLyrics() + "\n\n";
+            lyrics.append(chorded_lyrics.get(i).getChords()).append("\n").append(chorded_lyrics.get(i).getLyrics()).append("\n\n");
         }
-        return lyrics;
+        return lyrics.toString();
     }
 }

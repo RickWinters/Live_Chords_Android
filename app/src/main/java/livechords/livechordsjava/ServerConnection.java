@@ -9,9 +9,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 
-public class Connection extends AsyncTask<String, Void, String> {
-    private static final String TAG = "MYDEBUG_Connection";
+public class ServerConnection extends AsyncTask<String, Void, String> {
+    private static final String TAG = "MYDEBUG_ServeConnection";
     private Exception exception;
     private static HttpURLConnection connection;
     private String mainURL = "http://82.75.204.165:8081/live_chords/";
@@ -29,7 +30,7 @@ public class Connection extends AsyncTask<String, Void, String> {
             connection.getInputStream();
 
             int status = connection.getResponseCode();
-            //Log.i("Connection", "Status = "+status);
+            //Log.i("ServerConnection", "Status = "+status);
 
             if (status > 299){
                 reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
@@ -45,7 +46,7 @@ public class Connection extends AsyncTask<String, Void, String> {
                 reader.close();
             }
 
-            //Log.i("Connection", response.toString());
+            //Log.i("ServerConnection", response.toString());
             return response.toString();
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -59,13 +60,17 @@ public class Connection extends AsyncTask<String, Void, String> {
     private String getLyrics(String artist, String title){
         Log.d(TAG, "getLyrics() called with: artist = [" + artist + "], title = [" + title + "]");
         URL url = null;
+        artist = artist.replace(" ", "_");
+        artist = artist.replace("'", "");
+        title = title.replace(" ", "_");
+        title = title.replace("'", "");
+
         try {
             url = new URL(mainURL+"Get/"+artist+"/"+title);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        String lyrics = getResponse(url);
-        return lyrics;
+        return getResponse(url);
     }
 
     private String getLyricsList2() {
@@ -77,22 +82,25 @@ public class Connection extends AsyncTask<String, Void, String> {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        String list = getResponse(url);
-        return list;
+        return getResponse(url);
     }
 
     @Override
     public String doInBackground(String... strings) {
-        Log.d(TAG, "doInBackground() called with: strings = [" + strings + "]");
+        Log.d(TAG, "doInBackground() called with: strings = [" + Arrays.toString(strings) + "]");
         String action = strings[0];
         String answer = "incorrect command";
-        if (action == "getList"){
-            answer = getLyricsList2();;
-        } else if (action == "getLyrics")
+        if (action.equals("getList")) {
+            answer = getLyricsList2();
+        } else if (action.equals("getLyrics"))
             answer = getLyrics(strings[1], strings[2]);
         Log.d(TAG, "doInBackground: Finished");
+
         return answer;
     }
 
-
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+    }
 }
