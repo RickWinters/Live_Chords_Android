@@ -23,7 +23,6 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse;
 
 import java.util.concurrent.ExecutionException;
 
-import livechords.livechordsjava.Fragment_classes.ContactFragment;
 import livechords.livechordsjava.Fragment_classes.HomeFragment;
 import livechords.livechordsjava.Fragment_classes.SpotifyFragment;
 import livechords.livechordsjava.Model.CurrentSong;
@@ -88,9 +87,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
                 //UpdateLyrics();
                 break;
-            case R.id.nav_message:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ContactFragment()).commit();
-                break;
             case R.id.nav_spotify_icon:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SpotifyFragment()).commit();
                 break;
@@ -131,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void UpdateLyricsButton(View view) {
         Log.d(TAG, "UpdateLyricsButton() called with: view = [" + view + "]");
         textView = findViewById(R.id.fragment_lyrics_text);
-        textView.setText("Lyrics are updating");
         try {
             if (!loggedIn) {
                 Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
@@ -139,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 currentSong = new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken).get();
             }
             if (!currentSong.getArtist().equals(current_artist) || !currentSong.getTitle().equals(current_title)) {
+                textView.setText("Lyrics are updating");
                 current_title = currentSong.getTitle();
                 current_artist = currentSong.getArtist();
                 UpdateLyrics();
