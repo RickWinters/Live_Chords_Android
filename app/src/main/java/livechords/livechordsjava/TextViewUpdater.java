@@ -6,13 +6,12 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 
 public class TextViewUpdater extends AsyncTask<Object, String, Void> {
     private WeakReference<MainActivity> activityWeakReference;
     private TextView textView;
     private ServerConnection serverConnection = new ServerConnection();
-    private static final String TAG = "MYDEBUG_Lyrics_updater";
+    private static final String TAG = "MYDEBUG_TextV_updater";
 
     TextViewUpdater(MainActivity activity) {
         activityWeakReference = new WeakReference<MainActivity>(activity);
@@ -26,7 +25,7 @@ public class TextViewUpdater extends AsyncTask<Object, String, Void> {
 
     @Override
     protected Void doInBackground(Object... Objects) {
-        Log.d(TAG, "doInBackground() called with: strings = [" + Arrays.toString(Objects) + "......]");
+        Log.d(TAG, "doInBackground() called with: Objects = [" + Objects + "......]");
         int id = (int) Objects[0];
         String text = (String) Objects[1];
         MainActivity activity = activityWeakReference.get();
