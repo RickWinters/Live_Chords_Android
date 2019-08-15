@@ -2,7 +2,6 @@ package livechords.livechordsjava;
 
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -148,11 +147,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public void SpotifyLogin(){
         Log.d(TAG, "SpotifyLogin() called");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "authenticate");
-        } else {
-            new SpotifyConnector(this).execute("authenticate");
-        }
+        new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "authenticate");
 
     }
 
