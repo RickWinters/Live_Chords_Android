@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void UpdateLyrics() {
         Log.d(TAG, "UpdateLyrics() called song" + current_artist + " - " + current_title);
         String lyrics = GetLyrics(current_artist, current_title);
-        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, lyrics);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyrics);
     }
 
     public void UpdateLyricsButton(View view) {
@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Log.d(TAG, "onActivityResult: User logged in");
                     accesToken = response.getAccessToken();
                     loggedIn = true;
-                    new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
+
                     break;
 
                 // Auth flow returned an error
