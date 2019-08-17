@@ -47,7 +47,6 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
     private String GetReply(URL url, String accestoken) {
         Log.d(TAG, "GetReply() called with: url = [" + url + "], accestoken = [" + accestoken + "]");
         try {
-            Thread.sleep(5000);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setReadTimeout(5000);
@@ -56,15 +55,24 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             connection.setRequestProperty("Content-Type", "application/json");
             //connection.getInputStream();
             int status = connection.getResponseCode();
-            //Log.i("ServerConnection", "Status = "+status);
+            Log.i(TAG, "Status = "+status);
 
+            //HANDLE ERRORS
             if (status > 299) {
                 reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
                 while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
                 reader.close();
-            } else {
+            }
+
+            //Handle 204 no content when no song is playing
+            else if (status == 204){
+                response.append("No song playing");
+            }
+
+            //Handle correct content
+            else {
                 reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 while ((line = reader.readLine()) != null) {
                     response.append(line);
@@ -72,8 +80,6 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
                 reader.close();
             }
             //Log.d(TAG, "UpdateCurrentSong() returned: " + response.toString());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {

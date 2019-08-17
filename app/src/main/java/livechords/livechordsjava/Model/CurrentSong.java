@@ -26,14 +26,19 @@ public class CurrentSong {
     }
 
     public void ParseJson(String reply) {
-        Log.d(TAG, "ParseJson() called with: reply = [" + reply + "]");
-        HashMap<String, Object> replyMap = GetHashMapFromJsonString.GetMap(reply);
-        HashMap itemMap = (HashMap) replyMap.get("item");
-        title = (String) itemMap.get("name");
-        ArrayList artists = (ArrayList) itemMap.get("artists");
-        HashMap artistMap = (HashMap) artists.get(0);
-        artist = (String) artistMap.get("name");
-        Log.d(TAG, "ParseJson() returned: " + artist + " - " + title);
+        if (!reply.equals("No song playing")) {
+            Log.d(TAG, "ParseJson() called with: reply = [" + reply + "]");
+            HashMap<String, Object> replyMap = GetHashMapFromJsonString.GetMap(reply);
+            HashMap itemMap = (HashMap) replyMap.get("item");
+            title = (String) itemMap.get("name");
+            ArrayList artists = (ArrayList) itemMap.get("artists");
+            HashMap artistMap = (HashMap) artists.get(0);
+            artist = (String) artistMap.get("name");
+            Log.d(TAG, "ParseJson() returned: " + artist + " - " + title);
+        } else {
+            title = "No song playing";
+            artist = "No song playing";
+        }
     }
 
 

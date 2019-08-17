@@ -131,12 +131,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
         } else {
             new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
-        }
-        if (!currentSong.getArtist().equals(current_artist) || !currentSong.getTitle().equals(current_title)) {
-            textView.setText("Lyrics are updating");
-            current_title = currentSong.getTitle();
-            current_artist = currentSong.getArtist();
-            UpdateLyrics();
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, "Lyrics are updating");
         }
     }
 
@@ -202,4 +197,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void setCurrentSong(CurrentSong currentSong) {
         this.currentSong = currentSong;
     }
+
+
 }
