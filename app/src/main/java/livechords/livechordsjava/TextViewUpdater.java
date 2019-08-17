@@ -41,7 +41,7 @@ public class TextViewUpdater extends AsyncTask<Object, String, Void> {
             if (textView == null){
                 Log.d(TAG, "doInBackground: textView is null");
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
