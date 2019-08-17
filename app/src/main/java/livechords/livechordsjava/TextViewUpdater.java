@@ -7,13 +7,13 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
-public class LyricsUpdater extends AsyncTask<String, String, Void> {
+public class TextViewUpdater extends AsyncTask<Object, String, Void> {
     private WeakReference<MainActivity> activityWeakReference;
     private TextView textView;
     private ServerConnection serverConnection = new ServerConnection();
-    private static final String TAG = "MYDEBUG_Lyrics_updater";
+    private static final String TAG = "MYDEBUG_TextV_updater";
 
-    LyricsUpdater(MainActivity activity){
+    TextViewUpdater(MainActivity activity) {
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
 
@@ -24,8 +24,10 @@ public class LyricsUpdater extends AsyncTask<String, String, Void> {
     }
 
     @Override
-    protected Void doInBackground(String... strings) {
-        Log.d(TAG, "doInBackground() called with: strings = [" + strings + "......]");
+    protected Void doInBackground(Object... Objects) {
+        Log.d(TAG, "doInBackground() called with: Objects = [" + Objects + "......]");
+        int id = (int) Objects[0];
+        String text = (String) Objects[1];
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
             return null;
@@ -34,7 +36,7 @@ public class LyricsUpdater extends AsyncTask<String, String, Void> {
         boolean not_found = true;
         while (not_found) {
             Log.d(TAG, "doInBackground: while loop running");
-            textView = activity.findViewById(R.id.fragment_lyrics_text);
+            textView = activity.findViewById(id);
             Log.d(TAG, "doInBackground: textview searched for");
             if (textView == null){
                 Log.d(TAG, "doInBackground: textView is null");
@@ -47,7 +49,7 @@ public class LyricsUpdater extends AsyncTask<String, String, Void> {
                 not_found = false;
             }
         }
-        publishProgress(strings[0]);
+        publishProgress(text);
         Log.d(TAG, "doInBackground: Finished");
         return null;
     }

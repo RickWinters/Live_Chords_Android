@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private String current_artist = "Flogging_Molly";
     private String current_title = "Drunken_Lullabies";
     private CurrentSong currentSong = new CurrentSong();
+    private String account_name;
 
     //DATA FOR SPOTIFY CONNECTION
     private String accesToken = "";
@@ -118,30 +119,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //Function that fills lyrics screen with lyrics
     public void UpdateLyrics() {
-        Log.d(TAG, "UpdateLyrics() called song" + current_artist + " - " + current_title);
+        Log.d(TAG, "UpdateLyrics() called song = " + current_artist + "_" + current_title);
         String lyrics = GetLyrics(current_artist, current_title);
-        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, lyrics);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyrics);
     }
 
     public void UpdateLyricsButton(View view) {
         Log.d(TAG, "UpdateLyricsButton() called with: view = [" + view + "]");
         textView = findViewById(R.id.fragment_lyrics_text);
-        try {
-            if (!loggedIn) {
-                Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
-            } else {
-                currentSong = new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken).get();
-            }
-            if (!currentSong.getArtist().equals(current_artist) || !currentSong.getTitle().equals(current_title)) {
-                textView.setText("Lyrics are updating");
-                current_title = currentSong.getTitle();
-                current_artist = currentSong.getArtist();
-                UpdateLyrics();
-            }
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (!loggedIn) {
+            Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
+        } else {
+            new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, "Lyrics are updating");
         }
     }
 
@@ -154,6 +144,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void SpotifyLoginButton(View view){
         Log.d(TAG, "SpotifyLoginButton() called");
         SpotifyLogin();
+    }
+
+    public void UpdateLoginButtonText() {
+        Log.d(TAG, "UpdateLoginButtonText() called: Account name = " + account_name);
+        String string = "Logged into spotify with account name: \n" + account_name;
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, string);
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -170,9 +166,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Log.d(TAG, "onActivityResult: User logged in");
                     accesToken = response.getAccessToken();
                     loggedIn = true;
-                    new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
+                    new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "personal", accesToken);
                     break;
-
                 // Auth flow returned an error
                 case ERROR:
                     // Handle error response
@@ -194,4 +189,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d(TAG, "setCurrent_title() called with: current_title = [" + current_title + "]");
         this.current_title = current_title;
     }
+
+    public void setAccount_name(String account_name) {
+        this.account_name = account_name;
+    }
+
+    public void setCurrentSong(CurrentSong currentSong) {
+        this.currentSong = currentSong;
+    }
+
+
 }
