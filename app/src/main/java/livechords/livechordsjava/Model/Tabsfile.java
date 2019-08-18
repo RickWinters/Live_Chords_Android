@@ -49,8 +49,8 @@ public class Tabsfile {
             has_azlyrics = root.getBoolean("has_azlyrics");
             version = root.getString("version");
 
-            while (azlyrics.size() > 1) {
-                azlyrics.remove(1);
+            while (azlyrics.size() > 0) {
+                azlyrics.remove(0);
             }
             JSONArray azlyric_array = root.getJSONArray("azlyrics");
             for (int i = 0; i < azlyric_array.length(); i++) {
@@ -58,8 +58,8 @@ public class Tabsfile {
                 azlyrics.add(item);
             }
 
-            while (tabslines.size() > 1) {
-                tabslines.remove(1);
+            while (tabslines.size() > 0) {
+                tabslines.remove(0);
             }
             JSONArray tabsline_array = root.getJSONArray("tabslines");
             for (int i = 0; i < tabsline_array.length(); i++) {
@@ -73,8 +73,8 @@ public class Tabsfile {
                 tabslines.add(tabsline);
             }
 
-            while (chorded_lyrics.size() > 1) {
-                chorded_lyrics.remove(1);
+            while (chorded_lyrics.size() > 0) {
+                chorded_lyrics.remove(0);
             }
             JSONArray chorded_lyric_array = root.getJSONArray("chorded_lyrics");
             for (int i = 0; i < chorded_lyric_array.length(); i++) {
