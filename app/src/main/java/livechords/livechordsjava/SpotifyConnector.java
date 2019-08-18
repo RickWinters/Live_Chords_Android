@@ -164,15 +164,15 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
         if (value.getClass() == CurrentSong.class) {
             String artist = currentSong.getArtist().replace(" ", "_");
             String title = currentSong.getTitle().replace(" ", "_");
-            activity.setCurrent_artist(artist);
-            activity.setCurrent_title(title);
+            activity.setCurrentArtist(artist);
+            activity.setCurrentTitle(title);
             activity.setCurrentSong(currentSong);
             activity.UpdateLyrics();
         } else if (value.getClass() == SpotifyAccount.class) {
-            activity.setAccount_name(spotifyAccount.getName());
+            activity.setAccountName(spotifyAccount.getName());
             //spotifyAccount = (SpotifyAccount) values[0];
             //String name = spotifyAccount.getName();
-            //activity.setAccount_name(name);
+            //activity.setAccountName(name);
             activity.UpdateLoginButtonText();
         }
     }

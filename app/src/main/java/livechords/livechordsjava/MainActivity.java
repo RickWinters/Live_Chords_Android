@@ -1,6 +1,7 @@
 package livechords.livechordsjava;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,15 +41,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //DATA FOR SONGS AND STUFF
     private Tabsfile tabsfile = new Tabsfile();
-    private String current_artist = "Flogging_Molly";
-    private String current_title = "Drunken_Lullabies";
+    //KEYS
+    public static final String SHARED_PREFS = "sharedPrefs";
+    public static final String KEY_accounName = "accountName_key";
     private CurrentSong currentSong = new CurrentSong();
-    private String account_name;
+    public static final String KEY_accesToken = "accesToken_key";
 
     //DATA FOR SPOTIFY CONNECTION
     private String accesToken = "";
     private Boolean loggedIn = false;
+    public static final String KEY_loggedIn = "loggedIn_key";
+    public static final String KEY_lyricsText = "lyricsText_key";
+    public static final String KEY_spotifyLoginButtonText = "spotifyLoginButtonText_key";
+    private String currentArtist = "Flogging_Molly";
+    private String currentTitle = "Drunken_Lullabies";
+    private String accountName;
+    //Strings for textviews
+    private String lyricsText;
+    private String spotifyLoginButtonText;
 
+    //OVERRIDDEN METHODS
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +78,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
+        loadData();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyricsText);
     }
+
 
     @Override
     public void onBackPressed(){
@@ -85,10 +101,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         switch(menuItem.getItemId()){
             case R.id.nav_home:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
-                //UpdateLyrics();
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyricsText);
                 break;
             case R.id.nav_spotify_icon:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SpotifyFragment()).commit();
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, spotifyLoginButtonText);
                 break;
             case R.id.nav_share:
                 Toast.makeText(this, "Share", Toast.LENGTH_SHORT).show();
@@ -99,6 +116,38 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "onPause() called");
+        saveData();
+        super.onPause();
+    }
+
+    //SELF MADE FUNCTIONS
+    ///LOADING AND SAVING DATA
+    public void saveData() {
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putString(KEY_accesToken, accesToken);
+        editor.putString(KEY_accounName, accountName);
+        editor.putString(KEY_spotifyLoginButtonText, spotifyLoginButtonText);
+        editor.putString(KEY_lyricsText, lyricsText);
+        editor.putBoolean(KEY_loggedIn, loggedIn);
+        editor.apply();
+
+        Toast.makeText(this, "Data saved", Toast.LENGTH_LONG).show();
+    }
+
+    public void loadData() {
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        accesToken = sharedPreferences.getString(KEY_accesToken, "");
+        accountName = sharedPreferences.getString(KEY_accounName, "");
+        lyricsText = sharedPreferences.getString(KEY_lyricsText, "Lyrics come here");
+        spotifyLoginButtonText = sharedPreferences.getString(KEY_spotifyLoginButtonText, "Login to new account");
+        loggedIn = sharedPreferences.getBoolean(KEY_loggedIn, false);
     }
 
     //Function that given an artist and title returns the lyrics
@@ -119,8 +168,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //Function that fills lyrics screen with lyrics
     public void UpdateLyrics() {
-        Log.d(TAG, "UpdateLyrics() called song = " + current_artist + "_" + current_title);
-        String lyrics = GetLyrics(current_artist, current_title);
+        Log.d(TAG, "UpdateLyrics() called song = " + currentArtist + "_" + currentTitle);
+        String lyrics = GetLyrics(currentArtist, currentTitle);
+        lyricsText = lyrics;
         new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyrics);
     }
 
@@ -146,12 +196,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SpotifyLogin();
     }
 
+    //method that handles a call from spotifyconnector to update the text of the button
     public void UpdateLoginButtonText() {
-        Log.d(TAG, "UpdateLoginButtonText() called: Account name = " + account_name);
-        String string = "Logged into spotify with account name: \n" + account_name;
+        Log.d(TAG, "UpdateLoginButtonText() called: Account name = " + accountName);
+        String string = "Logged into spotify with account name: \n" + accountName;
         new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, string);
+        spotifyLoginButtonText = string;
     }
 
+    //method handling the result of the WebView when logging into spotify
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         Log.d(TAG, "onActivityResult() called with: requestCode = [" + requestCode + "], resultCode = [" + resultCode + "], intent = [" + intent + "]");
         super.onActivityResult(requestCode, resultCode, intent);
@@ -180,23 +233,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public void setCurrent_artist(String current_artist) {
-        Log.d(TAG, "setCurrent_artist() called with: current_artist = [" + current_artist + "]");
-        this.current_artist = current_artist;
+
+    //SETTERS
+    public void setCurrentArtist(String currentArtist) {
+        Log.d(TAG, "setCurrentArtist() called with: currentArtist = [" + currentArtist + "]");
+        this.currentArtist = currentArtist;
     }
 
-    public void setCurrent_title(String current_title) {
-        Log.d(TAG, "setCurrent_title() called with: current_title = [" + current_title + "]");
-        this.current_title = current_title;
+    public void setCurrentTitle(String currentTitle) {
+        Log.d(TAG, "setCurrentTitle() called with: currentTitle = [" + currentTitle + "]");
+        this.currentTitle = currentTitle;
     }
 
-    public void setAccount_name(String account_name) {
-        this.account_name = account_name;
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
     }
 
     public void setCurrentSong(CurrentSong currentSong) {
         this.currentSong = currentSong;
     }
-
 
 }
