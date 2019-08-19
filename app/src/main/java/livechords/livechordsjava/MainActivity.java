@@ -41,10 +41,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //DATA FOR SONGS AND STUFF
     private Tabsfile tabsfile = new Tabsfile();
+    private CurrentSong currentSong = new CurrentSong();
+
     //KEYS
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String KEY_accounName = "accountName_key";
-    private CurrentSong currentSong = new CurrentSong();
     public static final String KEY_accesToken = "accesToken_key";
 
     //DATA FOR SPOTIFY CONNECTION
@@ -53,9 +54,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static final String KEY_loggedIn = "loggedIn_key";
     public static final String KEY_lyricsText = "lyricsText_key";
     public static final String KEY_spotifyLoginButtonText = "spotifyLoginButtonText_key";
-    private String currentArtist = "Flogging_Molly";
-    private String currentTitle = "Drunken_Lullabies";
+    private String currentArtist;
+    private String currentTitle;
     private String accountName;
+
     //Strings for textviews
     private String lyricsText;
     private String spotifyLoginButtonText;
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         loadData();
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
         new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyricsText);
+        new SpotifyConnector(this ).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "valid_accestoken", accesToken);
     }
 
 
@@ -128,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     //SELF MADE FUNCTIONS
     ///LOADING AND SAVING DATA
     public void saveData() {
+        Log.d(TAG, "saveData() called");
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
@@ -142,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void loadData() {
+        Log.d(TAG, "loadData() called");
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         accesToken = sharedPreferences.getString(KEY_accesToken, "");
         accountName = sharedPreferences.getString(KEY_accounName, "");
@@ -253,4 +258,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         this.currentSong = currentSong;
     }
 
+    public void LogOutUser() {
+        this.accesToken = "";
+        this.loggedIn = false;
+        this.spotifyLoginButtonText = "login to new user";
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, "Login to new account");
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, "Lyrics come here");
+        Toast.makeText(this, "Acces token expired, " + accountName + " logged out from spotify", Toast.LENGTH_LONG).show();
+    }
+
+    public void UserStillLoggedIn() {
+        Toast.makeText(this, "User " + accountName + " still logged in", Toast.LENGTH_LONG).show();
+    }
 }

@@ -2,7 +2,6 @@ package livechords.livechordsjava;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.TextView;
 
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
@@ -29,13 +28,12 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
     private static final String TAG = "MYDEBUG_Spotify_Connect";
     private static final String CURRENTLYPLAYINGURL = "https://api.spotify.com/v1/me/player/currently-playing";
     private static final String ACCOUNTINFOURL = "https://api.spotify.com/v1/me";
-    private AuthenticationRequest authenticationRequest;
-    private BufferedReader reader;
-    private String line;
+    private static final String ACCESTOKENEXPIRED = "acces token expired";
+    private static final String USERSTILLLOGGEDIN = "user still logged in";
+
     private StringBuffer response = new StringBuffer();
 
     private WeakReference<MainActivity> activityWeakReference;
-    private TextView textView;
 
     private CurrentSong currentSong = new CurrentSong();
     private SpotifyAccount spotifyAccount = new SpotifyAccount();
@@ -58,17 +56,23 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             Log.i(TAG, "Status = "+status);
 
             //HANDLE ERRORS
-            if (status > 299) {
-                reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                reader.close();
-            }
+            BufferedReader reader;
+            String line;
+//            if (status > 299) {
+//                reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+//                while ((line = reader.readLine()) != null) {
+//                    response.append(line);
+//                }
+//                reader.close();
+//            }
 
             //Handle 204 no content when no song is playing
-            else if (status == 204){
+            if (status == 204){
                 response.append("No song playing");
+            }
+
+            else if (status == 401){
+                response.append(ACCESTOKENEXPIRED);
             }
 
             //Handle correct content
@@ -98,11 +102,11 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setShowDialog(true).setScopes(
                 new String[]{"user-read-private", "user-read-currently-playing"});
-        authenticationRequest = builder.build();
+        AuthenticationRequest authenticationRequest = builder.build();
         AuthenticationClient.openLoginActivity(activity, REQUEST_CODE, authenticationRequest);
     }
 
-    private CurrentSong UpdateCurrentSong(String accestoken) {
+    private void UpdateCurrentSong(String accestoken) {
         Log.d(TAG, "UpdateCurrentSong() called with: accestoken = [" + accestoken + "]");
         URL url = null;
         try {
@@ -111,12 +115,15 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             e.printStackTrace();
         }
         String reply = GetReply(url, accestoken);
-        currentSong.ParseJson(reply);
-        Log.d(TAG, "UpdateCurrentSong() returned: " + currentSong.toString());
-        return currentSong;
+        if (reply.equals(ACCESTOKENEXPIRED)){
+            publishProgress(ACCESTOKENEXPIRED);
+        } else {
+            currentSong.ParseJson(reply);
+            Log.d(TAG, "UpdateCurrentSong() returned: " + currentSong.toString());
+        }
     }
 
-    private SpotifyAccount GetAccountInfo(String accestoken) {
+    private void GetAccountInfo(String accestoken) {
         Log.d(TAG, "GetAccountInfo() called with: accestoken = [" + accestoken + "]");
         URL url = null;
         try {
@@ -125,10 +132,30 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             e.printStackTrace();
         }
         String reply = GetReply(url, accestoken);
-        spotifyAccount.ParseJson(reply);
-        return spotifyAccount;
+        if (reply.equals(ACCESTOKENEXPIRED)) {
+            publishProgress(ACCESTOKENEXPIRED);
+        } else {
+            spotifyAccount.ParseJson(reply);
+        }
 
     }
+
+    private String CheckAccesTokenValidity(String accestoken){
+        Log.d(TAG, "CheckAccesTokenValidity() called with: accestoken = [" + accestoken + "]");
+        URL url = null;
+        try {
+            url = new URL(ACCOUNTINFOURL);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        String reply = GetReply(url, accestoken);
+        if (reply.equals(ACCESTOKENEXPIRED)) {
+            return ACCESTOKENEXPIRED;
+        } else {
+            return USERSTILLLOGGEDIN;
+        }
+    }
+
 
     @Override
     protected Void doInBackground(String... strings) {
@@ -138,15 +165,18 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             LoginAuthenticate();
             Log.d(TAG, "doInBackground: Authenticate finished");
         } else if (action.equals("checksong")) {
-            currentSong = UpdateCurrentSong(strings[1]);
+            UpdateCurrentSong(strings[1]);
             Log.d(TAG, "doInBackground: Checksong finished Song = " + currentSong.toString());
             publishProgress(currentSong);
             //return currentSong;
         } else if (action.equals("personal")) {
-            spotifyAccount = GetAccountInfo(strings[1]);
+            GetAccountInfo(strings[1]);
             Log.d(TAG, "doInBackground: Personal finished account = " + spotifyAccount.toString());
             publishProgress(spotifyAccount);
             //return spotifyAccount;
+        } else if (action.equals("valid_accestoken")){
+            String valid = CheckAccesTokenValidity(strings[1]);
+            publishProgress(valid);
         }
         return null;
     }
@@ -161,6 +191,7 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             return;
         }
 
+        //handle return of UpdateCurrentSong
         if (value.getClass() == CurrentSong.class) {
             String artist = currentSong.getArtist().replace(" ", "_");
             String title = currentSong.getTitle().replace(" ", "_");
@@ -168,13 +199,25 @@ public class SpotifyConnector extends AsyncTask<String, Object, Void> {
             activity.setCurrentTitle(title);
             activity.setCurrentSong(currentSong);
             activity.UpdateLyrics();
+
+        //handle return of GetAccountInfo()
         } else if (value.getClass() == SpotifyAccount.class) {
             activity.setAccountName(spotifyAccount.getName());
             //spotifyAccount = (SpotifyAccount) values[0];
             //String name = spotifyAccount.getName();
             //activity.setAccountName(name);
             activity.UpdateLoginButtonText();
+
+        //handle return of access token expired
+        } else if (value.equals(ACCESTOKENEXPIRED)){
+            activity.LogOutUser();
+
+        //handle return of user still logged in
+        } else if (value.equals(USERSTILLLOGGEDIN)){
+            activity.UserStillLoggedIn();
         }
+
+
     }
 
     @Override
