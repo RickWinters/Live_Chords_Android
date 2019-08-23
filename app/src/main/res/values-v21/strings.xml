@@ -2,5 +2,6 @@
     <string name="app_name">live chords</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="lyrics_come_here">Lyrics come here\n</string>
 
 </resources>

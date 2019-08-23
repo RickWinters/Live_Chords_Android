@@ -13,15 +13,10 @@ public class TextViewUpdater extends AsyncTask<Object, String, Void> {
     private ServerConnection serverConnection = new ServerConnection();
     private static final String TAG = "MYDEBUG_TextV_updater";
 
-    TextViewUpdater(MainActivity activity) {
+    public TextViewUpdater(MainActivity activity) {
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
 
-    @Override
-    protected void onPreExecute() {
-        Log.d(TAG, "onPreExecute() called");
-        super.onPreExecute();
-    }
 
     @Override
     protected Void doInBackground(Object... Objects) {
@@ -35,13 +30,13 @@ public class TextViewUpdater extends AsyncTask<Object, String, Void> {
         //check if the textview is visible or if it is not null, than progressupdate the text.
         boolean not_found = true;
         while (not_found) {
-            Log.d(TAG, "doInBackground: while loop running");
+            //Log.d(TAG, "doInBackground: while loop running");
             textView = activity.findViewById(id);
-            Log.d(TAG, "doInBackground: textview searched for");
+            //Log.d(TAG, "doInBackground: textview searched for");
             if (textView == null){
-                Log.d(TAG, "doInBackground: textView is null");
+                //Log.d(TAG, "doInBackground: textView is null");
                 try {
-                    Thread.sleep(10);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -50,7 +45,7 @@ public class TextViewUpdater extends AsyncTask<Object, String, Void> {
             }
         }
         publishProgress(text);
-        Log.d(TAG, "doInBackground: Finished");
+        Log.d(TAG, "doInBackground: Finished, Updated textview " + id + " to " + text);
         return null;
     }
 

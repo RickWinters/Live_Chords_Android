@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lyrics_come_here">Lyrics come here\\n</string>
+    <string name="app_name">live chords</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="refresh_button">Refresh</string>
+    <string name="log_in_with_new_account">Log in with New account</string>
+</resources>

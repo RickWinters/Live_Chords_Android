@@ -1,5 +1,6 @@
 package livechords.livechordsjava.Model;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -11,8 +12,7 @@ public class CurrentSong {
     private static final String TAG = "MYDEBUF_CurrentSong";
     private String artist;
     private String title;
-    private HashMap previousMap;
-
+    private long startTime; // start time of the current song in millis since system has started.
 
     //GENERATORS
     public CurrentSong() {
@@ -34,6 +34,9 @@ public class CurrentSong {
             ArrayList artists = (ArrayList) itemMap.get("artists");
             HashMap artistMap = (HashMap) artists.get(0);
             artist = (String) artistMap.get("name");
+            int progressMs = Integer.parseInt((String) replyMap.get("progress_ms"));
+            long requestTime = SystemClock.elapsedRealtime();
+            startTime = requestTime - progressMs;
             Log.d(TAG, "ParseJson() returned: " + artist + " - " + title);
         } else {
             title = "No song playing";
@@ -47,16 +50,12 @@ public class CurrentSong {
         return artist;
     }
 
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
     public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public long getStartTime() {
+        return startTime;
     }
 
     @Override
