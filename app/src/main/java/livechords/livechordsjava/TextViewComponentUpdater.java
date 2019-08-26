@@ -1,70 +1,67 @@
 package livechords.livechordsjava;
 
+import android.content.res.ColorStateList;
 import android.os.AsyncTask;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
-public class TextViewComponentUpdater extends AsyncTask<Object, String, Void> {
+import livechords.livechordsjava.Model.TextViewComponentUpdaterCommand;
+
+public class TextViewComponentUpdater extends AsyncTask<TextViewComponentUpdaterCommand, TextViewComponentUpdaterCommand, Void> {
+    private static final String TAG = "MYDEBUG_TextVC_updater";
+    public static final int COMMAND_TEXT = 1;
+    public static final int COMMAND_TEXTSIZE = 2;
+    public static final int COMMAND_COLOR = 3;
+
     private WeakReference<MainActivity> activityWeakReference;
     private TextView textView;
     private ServerConnection serverConnection = new ServerConnection();
-    private static final String TAG = "MYDEBUG_TextV_updater";
 
     public TextViewComponentUpdater(MainActivity activity) {
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
 
-
     @Override
-    protected Void doInBackground(Object... Objects) {
-        Log.d(TAG, "doInBackground() called with: Objects = [" + Objects + "......]");
-        int id = (int) Objects[0];
-        String text = (String) Objects[1];
+    protected Void doInBackground(TextViewComponentUpdaterCommand... textViewComponentUpdaterCommands) {
+        Log.d(TAG, "doInBackground() called with: textViewComponentUpdaterCommands = [" + textViewComponentUpdaterCommands + "]");
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
             return null;
         }
-        //check if the textview is visible or if it is not null, than progressupdate the text.
-        boolean not_found = true;
-        while (not_found) {
-            //Log.d(TAG, "doInBackground: while loop running");
-            textView = activity.findViewById(id);
-            //Log.d(TAG, "doInBackground: textview searched for");
-            if (textView == null){
-                //Log.d(TAG, "doInBackground: textView is null");
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        for (TextViewComponentUpdaterCommand command : textViewComponentUpdaterCommands) {
+            while(true){
+                textView = activity.findViewById(command.getId());
+                if (textView != null) {
+                    break;
+                } else {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-            } else {
-                not_found = false;
             }
+            publishProgress(command);
         }
-        publishProgress(text);
-        Log.d(TAG, "doInBackground: Finished, Updated textview " + id + " to " + text);
         return null;
     }
 
     @Override
-    protected void onProgressUpdate(String... values) {
-        Log.d(TAG, "onProgressUpdate() called with: values = [" + values + "....]");
-        super.onProgressUpdate(values);
+    protected void onProgressUpdate(TextViewComponentUpdaterCommand... values) {
+        Log.d(TAG, "onProgressUpdate() called with: values = [" + values + "]");
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
             return;
         }
-        textView.setText(values[0]);
-        textView.setMovementMethod(new ScrollingMovementMethod());
-        //executed on Uithread
-        //put text in textfield.
-    }
-
-    @Override
-    protected void onPostExecute(Void aVoid) {
-        super.onPostExecute(aVoid);
+        TextViewComponentUpdaterCommand command = values[0];
+        if (command.getCommand() == COMMAND_COLOR){
+            textView.setTextColor((ColorStateList) command.getParameter());
+        } else if (command.getCommand() == COMMAND_TEXT){
+            textView.setText((String) command.getParameter());
+        } else if (command.getCommand() == COMMAND_TEXTSIZE){
+            textView.setTextSize((Float) command.getParameter());
+        }
     }
 }

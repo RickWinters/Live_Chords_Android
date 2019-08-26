@@ -11,8 +11,9 @@ import java.util.Arrays;
 import livechords.livechordsjava.Model.Chorded_lyrics;
 import livechords.livechordsjava.Model.CurrentSong;
 import livechords.livechordsjava.Model.Tabsfile;
+import livechords.livechordsjava.Model.TextViewComponentUpdaterCommand;
 
-public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
+public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCommand, Void> {
     private static final String TAG = "MYDEBUG_LyricsUpdater";
     private WeakReference<MainActivity> activityWeakReference;
     private int[] views = {R.id.Lyrics_line_1, R.id.Lyrics_line_2, R.id.Lyrics_line_3, R.id.Lyrics_line_4, R.id.Lyrics_line_5, R.id.Lyrics_line_6, R.id.Lyrics_line_7, R.id.Lyrics_line_8};
@@ -25,6 +26,8 @@ public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
     private void Synced_Lyrics(Tabsfile tabsfile, CurrentSong currentSong) {
         Log.d(TAG, "Synced_Lyrics() called with: tabsfile = [" + tabsfile + "], currentSong = [" + currentSong + "]");
         ArrayList<Chorded_lyrics> chordedLyrics = tabsfile.getChorded_lyrics();
+        ArrayList<TextViewComponentUpdaterCommand> commands = new ArrayList<>();
+
         int nlines = chordedLyrics.size();
         int active_line = 0;
         int display_line = 1;
@@ -67,26 +70,24 @@ public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
                 for (int i = 0; i < endloop; i++) {
                     String lyrics = chordedLyrics.get(active_line - start_offset + i).getChords() + "\n";
                     lyrics += chordedLyrics.get(active_line - start_offset + i).getLyrics();
-                    publishProgress(i, lyrics);
+                    commands.add(new TextViewComponentUpdaterCommand(views[i], TextViewComponentUpdater.COMMAND_TEXT, lyrics));
                 }
                 old_active_line = active_line;
+                TextViewComponentUpdaterCommand[] command = commands.toArray(new TextViewComponentUpdaterCommand[0]);
+                publishProgress(command);
             }
- /*           try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
         }
     }
 
     private void Unsynced_lyrics(Tabsfile tabsfile) {
         Log.d(TAG, "Unsynced_lyrics() called with: tabsfile = [" + tabsfile + "]");
-        StringBuilder Lyrics = new StringBuilder();
+        StringBuilder lyrics = new StringBuilder();
         for (Chorded_lyrics line : tabsfile.getChorded_lyrics()) {
-            Lyrics.append(line.getChords()).append("\n");
-            Lyrics.append(line.getLyrics()).append("\n\n");
+            lyrics.append(line.getChords()).append("\n");
+            lyrics.append(line.getLyrics()).append("\n\n");
         }
-        publishProgress(0, Lyrics.toString());
+        TextViewComponentUpdaterCommand command = new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_TEXT, lyrics.toString());
+        publishProgress(command);
     }
 
     @Override
@@ -101,21 +102,19 @@ public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
                 Unsynced_lyrics(tabsfile);
             }
         } else {
-            publishProgress(0, "no file found on server");
+            publishProgress(new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_TEXT, "No file found on server"));
         }
         return null;
     }
 
     @Override
-    protected void onProgressUpdate(Object... values) {
+    protected void onProgressUpdate(TextViewComponentUpdaterCommand... values) {
         Log.d(TAG, "onProgressUpdate() called with: values = [" + values + "]");
-        super.onProgressUpdate(values);
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()) {
             return;
         }
-        int index = (int) values[0];
-        String lyrics = (String) values[1];
-        new TextViewUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, views[index], lyrics);
+        new TextViewComponentUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, values);
     }
+
 }

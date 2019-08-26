@@ -269,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     accesToken = response.getAccessToken();
                     loggedIn = true;
                     new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "personal", accesToken);
+                    saveData();
                     break;
                 // Auth flow returned an error
                 case ERROR:
