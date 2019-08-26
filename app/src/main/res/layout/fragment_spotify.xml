@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:background="@color/background"
         android:onClick="SpotifyLoginButton"
-        android:text="Log in with New account"
+        android:text="@string/log_in_with_new_account"
         android:textColor="@color/active_font_colour" />
 
 </LinearLayout>

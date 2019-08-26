@@ -7,13 +7,13 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
-public class TextViewUpdater extends AsyncTask<Object, String, Void> {
+public class TextViewComponentUpdater extends AsyncTask<Object, String, Void> {
     private WeakReference<MainActivity> activityWeakReference;
     private TextView textView;
     private ServerConnection serverConnection = new ServerConnection();
     private static final String TAG = "MYDEBUG_TextV_updater";
 
-    public TextViewUpdater(MainActivity activity) {
+    public TextViewComponentUpdater(MainActivity activity) {
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
 

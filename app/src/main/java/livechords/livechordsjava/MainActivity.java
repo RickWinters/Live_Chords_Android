@@ -52,14 +52,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private String accesToken = "";
     private Boolean loggedIn = false;
     public static final String KEY_loggedIn = "loggedIn_key";
-    public static final String KEY_lyricsText = "lyricsText_key";
+    public static final String KEY_titleText = "titleText_key";
+    public static final String KEY_line1 = "line1_key";
+    public static final String KEY_line2 = "line2_key";
+    public static final String KEY_line3 = "line3_key";
+    public static final String KEY_line4 = "line4_key";
+    public static final String KEY_line5 = "line5_key";
+    public static final String KEY_line6 = "line6_key";
+    public static final String KEY_line7 = "line7_key";
+    public static final String KEY_line8 = "line8_key";
     public static final String KEY_spotifyLoginButtonText = "spotifyLoginButtonText_key";
     private String currentArtist;
     private String currentTitle;
     private String accountName;
 
     //Strings for textviews
-    private String lyricsText;
+    private String titleText;
+    private String line1;
+    private String line2;
+    private String line3;
+    private String line4;
+    private String line5;
+    private String line6;
+    private String line7;
+    private String line8;
     private String spotifyLoginButtonText;
 
     //OVERRIDDEN METHODS
@@ -82,10 +98,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         loadData();
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
-        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyricsText);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, titleText);
         new SpotifyConnector(this ).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "valid_accestoken", accesToken);
     }
-
 
     @Override
     public void onBackPressed(){
@@ -104,7 +119,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         switch(menuItem.getItemId()){
             case R.id.nav_home:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyricsText);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, titleText);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, line1);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, line2);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, line3);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, line4);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, line5);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, line6);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, line7);
+                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, line8);
                 break;
             case R.id.nav_spotify_icon:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SpotifyFragment()).commit();
@@ -138,7 +161,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         editor.putString(KEY_accesToken, accesToken);
         editor.putString(KEY_accounName, accountName);
         editor.putString(KEY_spotifyLoginButtonText, spotifyLoginButtonText);
-        editor.putString(KEY_lyricsText, lyricsText);
+        editor.putString(KEY_titleText, titleText);
+        editor.putString(KEY_line1, line1);
+        editor.putString(KEY_line2, line2);
+        editor.putString(KEY_line3, line3);
+        editor.putString(KEY_line4, line4);
+        editor.putString(KEY_line5, line5);
+        editor.putString(KEY_line6, line6);
+        editor.putString(KEY_line7, line7);
+        editor.putString(KEY_line8, line8);
         editor.putBoolean(KEY_loggedIn, loggedIn);
         editor.apply();
 
@@ -150,43 +181,56 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         accesToken = sharedPreferences.getString(KEY_accesToken, "");
         accountName = sharedPreferences.getString(KEY_accounName, "");
-        lyricsText = sharedPreferences.getString(KEY_lyricsText, "Lyrics come here");
+        titleText = sharedPreferences.getString(KEY_titleText, "Lyrics come here");
+        line1 = sharedPreferences.getString(KEY_line1, "-\n-");
+        line2 = sharedPreferences.getString(KEY_line2, "-\n-");
+        line3 = sharedPreferences.getString(KEY_line3, "-\n-");
+        line4 = sharedPreferences.getString(KEY_line4, "-\n-");
+        line5 = sharedPreferences.getString(KEY_line5, "-\n-");
+        line6 = sharedPreferences.getString(KEY_line6, "-\n-");
+        line7 = sharedPreferences.getString(KEY_line7, "-\n-");
+        line8 = sharedPreferences.getString(KEY_line8, "-\n-");
         spotifyLoginButtonText = sharedPreferences.getString(KEY_spotifyLoginButtonText, "Login to new account");
         loggedIn = sharedPreferences.getBoolean(KEY_loggedIn, false);
     }
 
     //Function that given an artist and title returns the lyrics
-    private String GetLyrics(String artist, String title){
+    private void GetLyrics(String artist, String title) {
         Log.d(TAG, "GetLyrics() called with: artist = [" + artist + "], title = [" + title + "]");
-        String lyrics = null;
         try {
             String reply = new ServerConnection().execute("getLyrics", artist, title).get();
             tabsfile.ParseJsonstring(reply);
-            lyrics = tabsfile.getLyrics();
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return lyrics;
     }
 
     //Function that fills lyrics screen with lyrics
     public void UpdateLyrics() {
         Log.d(TAG, "UpdateLyrics() called song = " + currentArtist + "_" + currentTitle);
-        String lyrics = GetLyrics(currentArtist, currentTitle);
-        lyricsText = lyrics;
-        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, lyrics);
+        GetLyrics(currentArtist, currentTitle);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, currentArtist.replace("_", " ") + "\n" + currentTitle.replace("_", " "));
+        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
     }
 
     public void UpdateLyricsButton(View view) {
         Log.d(TAG, "UpdateLyricsButton() called with: view = [" + view + "]");
-        textView = findViewById(R.id.fragment_lyrics_text);
+        textView = findViewById(R.id.Lyrics_Title);
         if (!loggedIn) {
             Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
         } else {
             new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, "Lyrics are updating");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, "Lyrics are updating\n");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, "-\n-");
+            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, "-\n-");
         }
     }
 
@@ -238,6 +282,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    public void LogOutUser() {
+        this.accesToken = "";
+        this.loggedIn = false;
+        this.spotifyLoginButtonText = "login to new user";
+        this.currentSong = null;
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, "log in with new account");
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, "lyrics come here");
+        Toast.makeText(this, "Acces token expired, " + accountName + " logged out from spotify", Toast.LENGTH_LONG).show();
+    }
+
+    public void UserStillLoggedIn() {
+        Toast.makeText(this, "User " + accountName + " still logged in", Toast.LENGTH_LONG).show();
+    }
 
     //SETTERS
     public void setCurrentArtist(String currentArtist) {
@@ -256,18 +313,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public void setCurrentSong(CurrentSong currentSong) {
         this.currentSong = currentSong;
-    }
-
-    public void LogOutUser() {
-        this.accesToken = "";
-        this.loggedIn = false;
-        this.spotifyLoginButtonText = "login to new user";
-        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, "Login to new account");
-        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.fragment_lyrics_text, "Lyrics come here");
-        Toast.makeText(this, "Acces token expired, " + accountName + " logged out from spotify", Toast.LENGTH_LONG).show();
-    }
-
-    public void UserStillLoggedIn() {
-        Toast.makeText(this, "User " + accountName + " still logged in", Toast.LENGTH_LONG).show();
     }
 }

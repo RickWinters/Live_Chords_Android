@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
     android:id="@+id/fragment_home"
+    android:orientation="vertical"
     android:padding="16dp">
 
     <!--<TextView-->
@@ -13,25 +14,107 @@
     <!--android:text="Here Comes some text"-->
     <!--android:textColor="@color/active_font_colour" />-->
 
-    <Button
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:background="@color/background"
-        android:onClick="UpdateLyricsButton"
-        android:text="Refresh"
-        android:textColor="@color/active_font_colour" />
+        android:paddingBottom="20dp">
+
+        <TextView
+            android:id="@+id/Lyrics_Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/background"
+            android:text="@string/lyrics_come_here"
+            android:textColor="@color/active_font_colour"
+            android:textSize="20sp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:background="@color/background"
+            android:onClick="UpdateLyricsButton"
+            android:text="@string/refresh_button"
+            android:textColor="@color/active_font_colour" />
+
+    </RelativeLayout>
+
 
     <TextView
-        android:id="@+id/fragment_lyrics_text"
+        android:id="@+id/Lyrics_line_1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/background"
-        android:text="Lyrics come here"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20sp"
+        android:text="-\n-"
         android:textColor="@color/active_font_colour"
         android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20sp"
+        android:textColor="@color/active_font_colour"
+        android:text="-\n-"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20sp"
+        android:text="-\n-"
+        android:textColor="@color/active_font_colour"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20sp"
+        android:text="-\n-"
+        android:textColor="@color/active_font_colour"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="-\n-"
+        android:textColor="@color/active_font_colour"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="-\n-"
+        android:textColor="@color/active_font_colour"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="-\n-"
+        android:textColor="@color/active_font_colour"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/Lyrics_line_8"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="-\n-"
+        android:textColor="@color/active_font_colour"
+        android:textSize="20sp" />
+
 
     <!--android:layout_marginTop="10dp"-->
     <!--android:layout_alignParentTop="true"-->
     <!--android:layout_centerHorizontal="true"/>-->
-</RelativeLayout>
+</LinearLayout>
