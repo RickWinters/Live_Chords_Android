@@ -1,4 +1,4 @@
-package livechords.livechordsjava.Model;
+package livechords.livechordsjava;
 
 import android.os.AsyncTask;
 import android.os.SystemClock;
@@ -8,9 +8,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import livechords.livechordsjava.MainActivity;
-import livechords.livechordsjava.R;
-import livechords.livechordsjava.TextViewUpdater;
+import livechords.livechordsjava.Model.Chorded_lyrics;
+import livechords.livechordsjava.Model.CurrentSong;
+import livechords.livechordsjava.Model.Tabsfile;
 
 public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
     private static final String TAG = "MYDEBUG_LyricsUpdater";
@@ -63,6 +63,7 @@ public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
                 endloop = nlines - active_line - start_offset;
             }
             if (old_active_line != active_line) {
+                Log.d(TAG, "Synced_Lyrics(), active line = " + active_line + "/" + nlines);
                 for (int i = 0; i < endloop; i++) {
                     String lyrics = chordedLyrics.get(active_line - start_offset + i).getChords() + "\n";
                     lyrics += chordedLyrics.get(active_line - start_offset + i).getLyrics();
@@ -70,11 +71,11 @@ public class LyricsUpdater extends AsyncTask<Object, Object, Void> {
                 }
                 old_active_line = active_line;
             }
-            try {
+ /*           try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
     }
 

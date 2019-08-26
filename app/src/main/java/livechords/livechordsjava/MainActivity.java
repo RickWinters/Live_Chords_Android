@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import livechords.livechordsjava.Fragment_classes.HomeFragment;
 import livechords.livechordsjava.Fragment_classes.SpotifyFragment;
 import livechords.livechordsjava.Model.CurrentSong;
-import livechords.livechordsjava.Model.LyricsUpdater;
 import livechords.livechordsjava.Model.Tabsfile;
 
 import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
