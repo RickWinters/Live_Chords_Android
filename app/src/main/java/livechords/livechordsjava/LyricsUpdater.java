@@ -4,6 +4,8 @@ import android.os.AsyncTask;
 import android.os.SystemClock;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +26,10 @@ public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCom
 
 
     private void Synced_Lyrics(Tabsfile tabsfile, CurrentSong currentSong) {
+        MainActivity activity = activityWeakReference.get();
+        if (activity == null || activity.isFinishing()){
+            return;
+        }
         Log.d(TAG, "Synced_Lyrics() called with: tabsfile = [" + tabsfile + "], currentSong = [" + currentSong + "]");
         ArrayList<Chorded_lyrics> chordedLyrics = tabsfile.getChorded_lyrics();
         ArrayList<TextViewComponentUpdaterCommand> commands = new ArrayList<>();
@@ -55,8 +61,8 @@ public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCom
             } else {
                 start_offset = active_line;
             }
-            if (active_line > 2) {
-                display_line = 2;
+            if (active_line > 1) {
+                display_line = 1;
             } else {
                 display_line = active_line;
             }
@@ -70,11 +76,18 @@ public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCom
                 for (int i = 0; i < endloop; i++) {
                     String lyrics = chordedLyrics.get(active_line - start_offset + i).getChords() + "\n";
                     lyrics += chordedLyrics.get(active_line - start_offset + i).getLyrics();
-                    commands.add(new TextViewComponentUpdaterCommand(views[i], TextViewComponentUpdater.COMMAND_TEXT, lyrics));
+                    publishProgress(new TextViewComponentUpdaterCommand(views[i], TextViewComponentUpdater.COMMAND_TEXT, lyrics));
+                    int color = (int) ContextCompat.getColor(activity, R.color.inactive_font_colour);
+                    if (i == display_line) { color = (int) ContextCompat.getColor(activity, R.color.active_font_colour);}
+                    publishProgress(new TextViewComponentUpdaterCommand(views[i], TextViewComponentUpdater.COMMAND_COLOR, color));
                 }
                 old_active_line = active_line;
-                TextViewComponentUpdaterCommand[] command = commands.toArray(new TextViewComponentUpdaterCommand[0]);
-                publishProgress(command);
+            }
+
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -82,12 +95,16 @@ public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCom
     private void Unsynced_lyrics(Tabsfile tabsfile) {
         Log.d(TAG, "Unsynced_lyrics() called with: tabsfile = [" + tabsfile + "]");
         StringBuilder lyrics = new StringBuilder();
+        MainActivity activity = activityWeakReference.get();
+        if (activity == null || activity.isFinishing()){
+            return;
+        }
         for (Chorded_lyrics line : tabsfile.getChorded_lyrics()) {
             lyrics.append(line.getChords()).append("\n");
             lyrics.append(line.getLyrics()).append("\n\n");
         }
-        TextViewComponentUpdaterCommand command = new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_TEXT, lyrics.toString());
-        publishProgress(command);
+        publishProgress(new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_TEXT, lyrics.toString()));
+        publishProgress(new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_COLOR, ContextCompat.getColor(activity, R.color.active_font_colour)));
     }
 
     @Override
@@ -95,6 +112,10 @@ public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCom
         Log.d(TAG, "doInBackground() called with: objects = [" + Arrays.toString(objects) + "]");
         Tabsfile tabsfile = (Tabsfile) objects[0];
         CurrentSong currentSong = (CurrentSong) objects[1];
+        MainActivity activity = activityWeakReference.get();
+        if (activity == null || activity.isFinishing()){
+            return null;
+        }
         if (tabsfile.isHas_tabs() && tabsfile.isHas_azlyrics()) {
             if (tabsfile.isSynced()) {
                 Synced_Lyrics(tabsfile, currentSong);
@@ -103,6 +124,7 @@ public class LyricsUpdater extends AsyncTask<Object, TextViewComponentUpdaterCom
             }
         } else {
             publishProgress(new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_TEXT, "No file found on server"));
+            publishProgress(new TextViewComponentUpdaterCommand(views[0], TextViewComponentUpdater.COMMAND_COLOR, ContextCompat.getColor(activity, R.color.active_font_colour)));
         }
         return null;
     }

@@ -5,7 +5,7 @@ public class TextViewComponentUpdaterCommand {
     private int command;
     private Object parameter;
 
-    public TextViewComponentUpdaterCommand(int id, int command, String parameter){
+    public TextViewComponentUpdaterCommand(int id, int command, Object parameter){
         this.id = id;
         this.command = command;
         this.parameter = parameter;
@@ -21,5 +21,13 @@ public class TextViewComponentUpdaterCommand {
 
     public Object getParameter() {
         return parameter;
+    }
+
+    @Override
+    public String toString() {
+        return  " id = " + id + "\n" +
+                " command = " + command + "\n" +
+                " parameter = " + parameter;
+
     }
 }
