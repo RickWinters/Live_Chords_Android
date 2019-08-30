@@ -16,8 +16,8 @@ public class CurrentSong {
 
     //GENERATORS
     public CurrentSong() {
-        this.artist = "Flogging_Molly";
-        this.title = "Drunken_Lullabies";
+        this.artist = "no_song_playing";
+        this.title = "no_song_playing";
     }
 
     public CurrentSong(String artist, String title) {
