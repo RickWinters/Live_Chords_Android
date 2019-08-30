@@ -6,4 +6,6 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="refresh_button">Refresh</string>
     <string name="log_in_with_new_account">Log in with New account</string>
+    <string name="No_file_found">No file found on server</string>
+    <string name="Empty_Lyrics_line">-\n-</string>
 </resources>

@@ -47,35 +47,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String KEY_accounName = "accountName_key";
     public static final String KEY_accesToken = "accesToken_key";
+    public static final String KEY_loggedIn = "loggedIn_key";
+    public static final String KEY_titleText = "titleText_key";
+    public static final String KEY_lines = "lines_key";
+    public static final String KEY_spotifyLoginButtonText = "spotifyLoginButtonText_key";
 
     //DATA FOR SPOTIFY CONNECTION
     private String accesToken = "";
     private Boolean loggedIn = false;
-    public static final String KEY_loggedIn = "loggedIn_key";
-    public static final String KEY_titleText = "titleText_key";
-    public static final String KEY_line1 = "line1_key";
-    public static final String KEY_line2 = "line2_key";
-    public static final String KEY_line3 = "line3_key";
-    public static final String KEY_line4 = "line4_key";
-    public static final String KEY_line5 = "line5_key";
-    public static final String KEY_line6 = "line6_key";
-    public static final String KEY_line7 = "line7_key";
-    public static final String KEY_line8 = "line8_key";
-    public static final String KEY_spotifyLoginButtonText = "spotifyLoginButtonText_key";
     private String currentArtist;
     private String currentTitle;
     private String accountName;
 
     //Strings for textviews
     private String titleText;
-    private String line1;
-    private String line2;
-    private String line3;
-    private String line4;
-    private String line5;
-    private String line6;
-    private String line7;
-    private String line8;
+    private String[] lines = new String[8];
     private String spotifyLoginButtonText;
 
     //OVERRIDDEN METHODS
@@ -119,19 +105,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         switch(menuItem.getItemId()){
             case R.id.nav_home:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, titleText);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, line1);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, line2);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, line3);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, line4);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, line5);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, line6);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, line7);
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, line8);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, TextViewComponentUpdater.COMMAND_TEXT, titleText);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, TextViewComponentUpdater.COMMAND_TEXT, lines[0]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, TextViewComponentUpdater.COMMAND_TEXT, lines[1]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, TextViewComponentUpdater.COMMAND_TEXT, lines[2]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, TextViewComponentUpdater.COMMAND_TEXT, lines[3]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, TextViewComponentUpdater.COMMAND_TEXT, lines[4]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, TextViewComponentUpdater.COMMAND_TEXT, lines[5]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, TextViewComponentUpdater.COMMAND_TEXT, lines[6]);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, TextViewComponentUpdater.COMMAND_TEXT, lines[7]);
                 break;
             case R.id.nav_spotify_icon:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SpotifyFragment()).commit();
-                new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, spotifyLoginButtonText);
+                new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, TextViewComponentUpdater.COMMAND_TEXT, spotifyLoginButtonText);
                 break;
             case R.id.nav_share:
                 Toast.makeText(this, "Share", Toast.LENGTH_SHORT).show();
@@ -162,14 +148,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         editor.putString(KEY_accounName, accountName);
         editor.putString(KEY_spotifyLoginButtonText, spotifyLoginButtonText);
         editor.putString(KEY_titleText, titleText);
-        editor.putString(KEY_line1, line1);
-        editor.putString(KEY_line2, line2);
-        editor.putString(KEY_line3, line3);
-        editor.putString(KEY_line4, line4);
-        editor.putString(KEY_line5, line5);
-        editor.putString(KEY_line6, line6);
-        editor.putString(KEY_line7, line7);
-        editor.putString(KEY_line8, line8);
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines){
+            sb.append(line).append(",");
+        }
+        editor.putString(KEY_lines, sb.toString());
         editor.putBoolean(KEY_loggedIn, loggedIn);
         editor.apply();
 
@@ -182,14 +165,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         accesToken = sharedPreferences.getString(KEY_accesToken, "");
         accountName = sharedPreferences.getString(KEY_accounName, "");
         titleText = sharedPreferences.getString(KEY_titleText, "Lyrics come here");
-        line1 = sharedPreferences.getString(KEY_line1, "-\n-");
-        line2 = sharedPreferences.getString(KEY_line2, "-\n-");
-        line3 = sharedPreferences.getString(KEY_line3, "-\n-");
-        line4 = sharedPreferences.getString(KEY_line4, "-\n-");
-        line5 = sharedPreferences.getString(KEY_line5, "-\n-");
-        line6 = sharedPreferences.getString(KEY_line6, "-\n-");
-        line7 = sharedPreferences.getString(KEY_line7, "-\n-");
-        line8 = sharedPreferences.getString(KEY_line8, "-\n-");
+        lines = sharedPreferences.getString(KEY_lines, "-\n-,-\n-,-\n-,-\n-,-\n-,-\n-,-\n-,-\n-").split(",");
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, titleText);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, lines[0]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, lines[1]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, lines[2]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, lines[3]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, lines[4]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, lines[5]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, lines[6]);
+        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, lines[7]);
         spotifyLoginButtonText = sharedPreferences.getString(KEY_spotifyLoginButtonText, "Login to new account");
         loggedIn = sharedPreferences.getBoolean(KEY_loggedIn, false);
     }
@@ -211,7 +196,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void UpdateLyrics() {
         Log.d(TAG, "UpdateLyrics() called song = " + currentArtist + "_" + currentTitle);
         GetLyrics(currentArtist, currentTitle);
-        new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, currentArtist.replace("_", " ") + "\n" + currentTitle.replace("_", " "));
+        titleText = currentArtist.replace("_", " ") + "\n" + currentTitle.replace("_", " ");
+        new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, TextViewComponentUpdater.COMMAND_TEXT, titleText);
         new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
     }
 
@@ -222,15 +208,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(this, "Not logged in to spotify yet", Toast.LENGTH_LONG).show();
         } else {
             new SpotifyConnector(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "checksong", accesToken);
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, "Lyrics are updating\n");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, "-\n-");
-            new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, TextViewComponentUpdater.COMMAND_TEXT, "Lyrics are updating\n");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_1, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_2, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_3, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_4, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_5, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_6, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_7, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, TextViewComponentUpdater.COMMAND_TEXT, "-\n-");
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_line_8, TextViewComponentUpdater.COMMAND_COLOR, R.color.active_font_colour);
         }
     }
 
@@ -251,6 +245,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String string = "Logged into spotify with account name: \n" + accountName;
         new TextViewUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.log_in_spotify_button, string);
         spotifyLoginButtonText = string;
+
     }
 
     //method handling the result of the WebView when logging into spotify
@@ -315,4 +310,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void setCurrentSong(CurrentSong currentSong) {
         this.currentSong = currentSong;
     }
+
+    public void setLines(String[] lines) {
+        this.lines = lines;
+    }
+
 }

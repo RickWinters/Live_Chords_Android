@@ -45,73 +45,82 @@
         android:id="@+id/Lyrics_line_1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20sp"
+        android:paddingBottom="15sp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp"
+        android:scrollbars="vertical"/>
 
     <TextView
         android:id="@+id/Lyrics_line_2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20sp"
+        android:paddingBottom="15sp"
+        android:fontFamily="monospace"
         android:textColor="@color/active_font_colour"
         android:text="-\n-"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/Lyrics_line_3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20sp"
+        android:paddingBottom="15sp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/Lyrics_line_4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20sp"
+        android:paddingBottom="15sp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/Lyrics_line_5"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
+        android:paddingBottom="15dp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/Lyrics_line_6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
+        android:paddingBottom="15dp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/Lyrics_line_7"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
+        android:paddingBottom="15dp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/Lyrics_line_8"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp"
+        android:paddingBottom="15dp"
+        android:fontFamily="monospace"
         android:text="-\n-"
         android:textColor="@color/active_font_colour"
-        android:textSize="20sp" />
+        android:textSize="15sp" />
 
 
     <!--android:layout_marginTop="10dp"-->
