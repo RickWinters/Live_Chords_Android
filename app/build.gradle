@@ -38,4 +38,5 @@ dependencies {
     //implementation 'com.spotify.sdk:spotify-app-remote-release-0.6.2@aar'
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'org.jsoup:jsoup:1.12.1'
 }

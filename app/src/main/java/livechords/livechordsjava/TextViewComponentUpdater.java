@@ -2,11 +2,9 @@ package livechords.livechordsjava;
 
 import android.os.AsyncTask;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 
 public class TextViewComponentUpdater extends AsyncTask<Object, Object, Void> {
     private static final String TAG = "MYDEBUG_TextVC_updater";
@@ -31,7 +29,7 @@ public class TextViewComponentUpdater extends AsyncTask<Object, Object, Void> {
         textViewID = (int) objects[0];
         command = (int) objects[1];
         parameter = objects[2]; //will be cast later to the correct object type
-        Log.d(TAG, "doInBackground() called with: textViewComponentUpdaterCommands = [ id = " + textViewID + " command = " + command  + " parameter = " + parameter + "]");
+        //Log.d(TAG, "doInBackground() called with: textViewComponentUpdaterCommands = [ id = " + textViewID + " command = " + command  + " parameter = " + parameter + "]");
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
             return null;
@@ -54,7 +52,7 @@ public class TextViewComponentUpdater extends AsyncTask<Object, Object, Void> {
 
     @Override
     protected void onProgressUpdate(Object... values) {
-        Log.d(TAG, "onProgressUpdate() called with: values = [" + Arrays.toString(values) + "]");
+        //Log.d(TAG, "onProgressUpdate() called with: values = [" + Arrays.toString(values) + "]");
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
             return;

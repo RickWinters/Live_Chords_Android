@@ -197,8 +197,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d(TAG, "UpdateLyrics() called song = " + currentArtist + "_" + currentTitle);
         GetLyrics(currentArtist, currentTitle);
         titleText = currentArtist.replace("_", " ") + "\n" + currentTitle.replace("_", " ");
-        new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, TextViewComponentUpdater.COMMAND_TEXT, titleText);
-        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
+        if (tabsfile.isHas_tabs() && tabsfile.isHas_azlyrics()) {
+            new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, TextViewComponentUpdater.COMMAND_TEXT, titleText);
+            new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
+        } else {
+            new LyricsDownloader(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile);
+        }
     }
 
     public void UpdateLyricsButton(View view) {
@@ -314,5 +318,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void setLines(String[] lines) {
         this.lines = lines;
     }
-
 }

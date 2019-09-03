@@ -13,17 +13,13 @@ import java.util.Arrays;
 
 public class ServerConnection extends AsyncTask<String, Void, String> {
     private static final String TAG = "MYDEBUG_ServeConnection";
-    private Exception exception;
-    private static HttpURLConnection connection;
     private String mainURL = "http://82.75.204.165:8081/live_chords/";
-    private BufferedReader reader;
-    private String line;
     private StringBuffer response = new StringBuffer();
 
     private String getResponse(URL url){
         Log.d(TAG, "getResponse() called with: url = [" + url + "]");
         try {
-            connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setReadTimeout(5000);
             connection.setReadTimeout(5000);
@@ -32,6 +28,8 @@ public class ServerConnection extends AsyncTask<String, Void, String> {
             int status = connection.getResponseCode();
             //Log.i("ServerConnection", "Status = "+status);
 
+            BufferedReader reader;
+            String line;
             if (status > 299){
                 reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
                 while((line = reader.readLine()) != null){
@@ -60,10 +58,8 @@ public class ServerConnection extends AsyncTask<String, Void, String> {
     private String getLyrics(String artist, String title){
         Log.d(TAG, "getLyrics() called with: artist = [" + artist + "], title = [" + title + "]");
         URL url = null;
-        artist = artist.replace(" ", "_");
-        artist = artist.replace("'", "");
-        title = title.replace(" ", "_");
-        title = title.replace("'", "");
+        artist = artist.replace(" ", "_").replace("%20","_");
+        title = title.replace(" ", "_").replace("%20","_");
 
         try {
             url = new URL(mainURL+"Get/"+artist+"/"+title);
@@ -73,8 +69,8 @@ public class ServerConnection extends AsyncTask<String, Void, String> {
         return getResponse(url);
     }
 
-    private String getLyricsList2() {
-        Log.d(TAG, "getLyricsList2() called");
+    private String getLyricsList() {
+        Log.d(TAG, "getLyricsList() called");
         // java.net.HttpUrlConnection Method
         URL url = null;
         try {
@@ -91,7 +87,7 @@ public class ServerConnection extends AsyncTask<String, Void, String> {
         String action = strings[0];
         String answer = "incorrect command";
         if (action.equals("getList")) {
-            answer = getLyricsList2();
+            answer = getLyricsList();
         } else if (action.equals("getLyrics"))
             answer = getLyrics(strings[1], strings[2]);
         Log.d(TAG, "doInBackground: Finished");
