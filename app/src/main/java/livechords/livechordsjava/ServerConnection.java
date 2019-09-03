@@ -12,6 +12,9 @@ public class ServerConnection extends AsyncTask<String, Void, String> {
     private String mainURL = "http://82.75.204.165:8081/live_chords/";
 
     private String getLyrics(String artist, String title){
+        String[] artistitle = HelperMethods.cleanBrackets(artist, title);
+        artist = artistitle[0];
+        title = artistitle[1];
         Log.d(TAG, "getLyrics() called with: artist = [" + artist + "], title = [" + title + "]");
         URL url = null;
         artist = artist.replace(" ", "_").replace("%20","_");
