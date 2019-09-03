@@ -6,18 +6,16 @@ import android.util.Log;
 import androidx.core.content.ContextCompat;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import livechords.livechordsjava.Model.Tabsfile;
 
@@ -28,7 +26,6 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     private Tabsfile tabsfile;
 
     private int[] views = {R.id.Lyrics_line_1, R.id.Lyrics_line_2, R.id.Lyrics_line_3, R.id.Lyrics_line_4, R.id.Lyrics_line_5, R.id.Lyrics_line_6, R.id.Lyrics_line_7, R.id.Lyrics_line_8};
-    private StringBuilder response = new StringBuilder();
 
     public LyricsDownloader(MainActivity activity){
         activityWeakReference = new WeakReference<MainActivity>(activity);
@@ -49,58 +46,31 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         return stringlines;
     }
 
-    private String getResponse(URL url){
-        Log.d(TAG, "getResponse() called with: url = [" + url + "]");
-        try {
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setReadTimeout(5000);
-            connection.setReadTimeout(5000);
-            connection.getInputStream();
-
-            int status = connection.getResponseCode();
-            //Log.i("ServerConnection", "Status = "+status);
-
-            BufferedReader reader;
-            String line;
-            if (status > 299){
-                reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                while((line = reader.readLine()) != null){
-                    response.append(line);
-                }
-                reader.close();
-            } else {
-                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                while((line = reader.readLine()) != null){
-                    response.append(line);
-                }
-                reader.close();
-            }
-
-            //Log.i("ServerConnection", response.toString());
-            return response.toString();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return e.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return e.toString();
-        }
-    }
-
     private void SearchUltimateGuitarTabs(){
-        String artist = tabsfile.getArtist().replace(" ","%20").replace("_","%20").trim();
-        String title = tabsfile.getTitle().replace(" ","%20 ").replace("_","%20").trim();
-        String searchurl = "https://www.ultimate-guitar.com/search.php?search_type=title&value="+artist+"%20"+title;
+        String[] artisttitle = HelperMethods.cleanArtistTitleString(tabsfile.getArtist(), tabsfile.getTitle());
+        String artist = artisttitle[0].replace("_"," ");
+        String title = artisttitle[1].replace("_", " ");
+        String searchurl = "https://www.ultimate-guitar.com/search.php?search_type=title&value="+artist+" "+title;
         try {
             URL url = new URL(searchurl);
-            String reply = getResponse(url);
+            String reply = HelperMethods.getResponse(url);
             Document doc = Jsoup.parse(reply);
             Elements elements = doc.getElementsByTag("script");
+            String resultsstring = null;
+            //loop over all elements with the tag script to find the correct one with search results
             for (Element element : elements){
-                Elements child = element.getAllElements();
-                System.out.println(child);
+                String child = ( (DataNode) element.childNode(0) ).getWholeData().trim();
+                if (child.substring(0,23).equals("window.UGAPP.store.page")){
+                    resultsstring = child.substring(26,child.length()-1);
+                    break;
+                }
             }
+            //Map the search results in a Hashmap and get
+            HashMap<String, Object> resultsmap = HelperMethods.GetJSONHashMap(resultsstring);
+            System.out.println(resultsmap);
+
+
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }

@@ -4,7 +4,7 @@ import android.util.Log;
 
 import java.util.HashMap;
 
-import livechords.livechordsjava.GetHashMapFromJsonString;
+import livechords.livechordsjava.HelperMethods;
 
 public class SpotifyAccount {
     private static final String TAG = "MYDEBUG_Spotify_Account";
@@ -24,7 +24,7 @@ public class SpotifyAccount {
 
     public void ParseJson(String reply) {
         Log.d(TAG, "ParseJson() called with: reply = [" + reply + "]");
-        HashMap<String, Object> map = GetHashMapFromJsonString.GetMap(reply);
+        HashMap<String, Object> map = HelperMethods.GetJSONHashMap(reply);
         name = (String) map.get("display_name");
         Log.d(TAG, "ParseJson() returned: " + map);
 
