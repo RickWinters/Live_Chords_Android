@@ -89,9 +89,9 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     }
 
     private void SearchUltimateGuitarTabs(){
-        String artist = tabsfile.getArtist().replace("%20"," ").replace("_"," ").trim();
-        String title = tabsfile.getTitle().replace("%20"," ").replace("_"," ").trim();
-        String searchurl = "https:/www.ultimate-guitar.com/search.php?search_type=title&value="+artist+" "+title;
+        String artist = tabsfile.getArtist().replace(" ","%20").replace("_","%20").trim();
+        String title = tabsfile.getTitle().replace(" ","%20 ").replace("_","%20").trim();
+        String searchurl = "https://www.ultimate-guitar.com/search.php?search_type=title&value="+artist+"%20"+title;
         try {
             URL url = new URL(searchurl);
             String reply = getResponse(url);
