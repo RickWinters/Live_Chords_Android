@@ -6,7 +6,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import livechords.livechordsjava.GetHashMapFromJsonString;
+import livechords.livechordsjava.HelperMethods;
 
 public class CurrentSong {
     private static final String TAG = "MYDEBUF_CurrentSong";
@@ -28,8 +28,8 @@ public class CurrentSong {
     public void ParseJson(String reply) {
         if (!reply.equals("No song playing")) {
             Log.d(TAG, "ParseJson() called with: reply = [" + reply + "]");
-            HashMap<String, Object> replyMap = GetHashMapFromJsonString.GetMap(reply);
-            HashMap itemMap = (HashMap) replyMap.get("item");
+            HashMap<String, Object> replyMap = HelperMethods.GetJSONHashMap(reply);
+            HashMap itemMap = (HashMap) replyMap.get("item"); //TODO: handle a null object reference when an add is playing
             title = (String) itemMap.get("name");
             ArrayList artists = (ArrayList) itemMap.get("artists");
             HashMap artistMap = (HashMap) artists.get(0);
