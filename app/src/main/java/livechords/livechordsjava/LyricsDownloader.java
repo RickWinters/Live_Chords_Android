@@ -13,6 +13,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 import java.io.StringReader;
@@ -20,6 +21,7 @@ import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import livechords.livechordsjava.Model.Tabsfile;
 
@@ -28,6 +30,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     private static final String TAG = "MYDEBUF_lyricsgetter";
     private WeakReference<MainActivity> activityWeakReference;
     private Tabsfile tabsfile;
+    public static final String NOTABSFOUND = "no_tabs_found";
 
     private int[] views = {R.id.Lyrics_line_1, R.id.Lyrics_line_2, R.id.Lyrics_line_3, R.id.Lyrics_line_4, R.id.Lyrics_line_5, R.id.Lyrics_line_6, R.id.Lyrics_line_7, R.id.Lyrics_line_8};
 
@@ -35,15 +38,12 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
 
-
-
-    private void SearchUltimateGuitarTabs(){
+    private String SearchUltimateGuitarTabs(){
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
-            return;
+            return null;
         }
-        new TextViewComponentUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching Ultimate Guitar tabs");
-        // search for tabs on ultimate guitar tabs
+        String tab_url = NOTABSFOUND;
         String[] artisttitle = HelperMethods.cleanArtistTitleString(tabsfile.getArtist(), tabsfile.getTitle());
         String artist = artisttitle[0].replace("_"," ");
         String title = artisttitle[1].replace("_", " ");
@@ -81,9 +81,9 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             //otherwise filter list on just Chords and get highest rating
             ArrayList<LinkedTreeMap> resultslist = (ArrayList<LinkedTreeMap>) datamap.get("results");
             int i = 0;
-            while (i < resultslist.size()){
+            while (i < resultslist.size()) {
                 LinkedTreeMap result = resultslist.get(i);
-                if (result.containsKey("type") && (result.get("type").equals("Chords"))){
+                if (result.containsKey("type") && (result.get("type").equals("Chords"))) {
                     i++;
                 } else {
                     resultslist.remove(i);
@@ -91,12 +91,11 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             }
 
             //Handle empty result list same as no result found
-            if(resultslist.size()==0){
+            if (resultslist.size() == 0) {
                 new TextViewComponentUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, views[0], TextViewComponentUpdater.COMMAND_TEXT, "no tabs found");
             } else {
                 //find the highest rating tab_url
                 double bestscore = -1;
-                String tab_url = null;
                 for (i = 0; i < resultslist.size(); i++) {
                     LinkedTreeMap result = resultslist.get(i);
                     if (result.containsKey("rating") && ((double) result.get("rating")) > bestscore) {
@@ -104,21 +103,48 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
                         tab_url = (String) result.get("tab_url");
                     }
                 }
-
-                // get and parse HTML of Tabs url
-                try {
-                    url = new URL(tab_url);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-                //get and parse html
-                String tabReply = HelperMethods.getResponse(url);
-                Document tabDoc = Jsoup.parse(tabReply);
-                Elements tabElements = tabDoc.getAllElements();
-                String tabResultsstring = null;
-
-                System.out.println(resultslist);
             }
+        }
+        return tab_url;
+    }
+
+    private String[] GetUltitameGuitarTabs(String tab_url){
+        ArrayList<String> tabs = new ArrayList<>();
+        try {
+            URL url = new URL(tab_url);
+            //get and parse html
+            String tabReply = HelperMethods.getResponse(url);
+            Document tabDoc = Jsoup.parse(tabReply);
+            Elements preElements = tabDoc.getElementsByTag("pre");
+            List<Node> tabElements = null;
+            for (Element element : preElements){
+                int nchilds = element.childNodeSize();
+                if (nchilds > 0){
+                    tabElements = element.childNodes();
+                }
+            }
+            //TODO: tabElements is a list of elements including either text or a list of childnodes with the chords
+            return (String[]) tabs.toArray();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return new String[]{NOTABSFOUND};
+        }
+    }
+
+    private String[] UltimateGuitarTabs(){
+        MainActivity activity = activityWeakReference.get();
+        if (activity == null || activity.isFinishing()){
+            return new String[]{NOTABSFOUND};
+        }
+        new TextViewComponentUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching Ultimate Guitar tabs");
+
+        // search for tabs on ultimate guitar tabs
+        String tab_url = SearchUltimateGuitarTabs();
+        if (!tab_url.equals("no_tabs_found")){
+            String tabs[] = GetUltitameGuitarTabs(tab_url);
+            return tabs;
+        } else {
+            return new String[]{NOTABSFOUND};
         }
     }
 
@@ -135,7 +161,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         activity.setLines(new String[]{"No file found on server"," "," "," "," "," "," "," "});
 
         // Search  Ultimate guitar tabs
-        SearchUltimateGuitarTabs();
+        String[] tabs = UltimateGuitarTabs();
         // Handle no tabs found
         // Search Genius.com
         // Search Azlyrics.com
