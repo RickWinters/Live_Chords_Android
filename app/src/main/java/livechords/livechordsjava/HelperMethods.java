@@ -157,8 +157,10 @@ public class HelperMethods {
         title = title.replace("-", "");
         title = title.replace("(", "");
         title = title.replace(")", "");
-        title = title.replace("live", "");
-        title = title.replace("Live", "");
+        title = title.replace("[","");
+        title = title.replace("]","");
+        title = title.replace("_live", "");
+        title = title.replace("_Live", "");
         title = title.replace("\'", "");
         title = title.replace("Version", "");
         title = title.replace("version", "");
@@ -173,6 +175,20 @@ public class HelperMethods {
 
         title = title.trim();
         artist = artist.trim();
+
+        return new String[]{artist, title};
+    }
+
+    public static String[] cleanBrackets(String artist, String title){
+        artist = artist.replace("["," ");
+        artist = artist.replace("]"," ");
+        artist = artist.replace("("," ");
+        artist = artist.replace(")"," ");
+
+        title = title.replace("["," ");
+        title = title.replace("]"," ");
+        title = title.replace("("," ");
+        title = title.replace(")"," ");
 
         return new String[]{artist, title};
     }
