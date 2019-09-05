@@ -14,6 +14,7 @@ import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import java.io.StringReader;
@@ -24,19 +25,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 import livechords.livechordsjava.Model.Tabsfile;
+import livechords.livechordsjava.Model.Tabslines;
 
 public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
     private static final String TAG = "MYDEBUF_lyricsgetter";
     private WeakReference<MainActivity> activityWeakReference;
     private Tabsfile tabsfile;
+    private Tabslines[] tabslines;
+    private int recursioncounter = 0;
     public static final String NOTABSFOUND = "no_tabs_found";
+
 
     private int[] views = {R.id.Lyrics_line_1, R.id.Lyrics_line_2, R.id.Lyrics_line_3, R.id.Lyrics_line_4, R.id.Lyrics_line_5, R.id.Lyrics_line_6, R.id.Lyrics_line_7, R.id.Lyrics_line_8};
 
     public LyricsDownloader(MainActivity activity){
         activityWeakReference = new WeakReference<MainActivity>(activity);
     }
+
+    private String ExtractTabsFromElement(List<Node> tabElements){
+        recursioncounter++;
+        StringBuilder tabs = new StringBuilder();
+        for (Node element: tabElements){
+            if (element.getClass()==TextNode.class){
+                tabs.append( ((TextNode) element).getWholeText());
+                tabs.append("\n");
+            } else {
+                List<Node> Newlist = element.childNodes();
+                String temp = ExtractTabsFromElement(Newlist);
+                tabs.append(temp);
+            }
+        }
+        recursioncounter--;
+        return tabs.toString();
+    }//TODO: ANALYSIS OF THE ELEMENTS COULD BE BETTER, NOW IT RETURNS A NEW STRING FOR EVERY SEPERATE ELEMENT.
 
     private String SearchUltimateGuitarTabs(){
         MainActivity activity = activityWeakReference.get();
@@ -45,8 +67,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         }
         String tab_url = NOTABSFOUND;
         String[] artisttitle = HelperMethods.cleanArtistTitleString(tabsfile.getArtist(), tabsfile.getTitle());
-        String artist = artisttitle[0].replace("_"," ");
-        String title = artisttitle[1].replace("_", " ");
+        String artist = artisttitle[0].replace("_"," ").trim();
+        String title = artisttitle[1].replace("_", " ").trim();
         String searchurl = "https://www.ultimate-guitar.com/search.php?search_type=title&value="+artist+" "+title;
         URL url = null;
         try {
@@ -108,8 +130,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         return tab_url;
     }
 
-    private String[] GetUltitameGuitarTabs(String tab_url){
-        ArrayList<String> tabs = new ArrayList<>();
+    private void GetUltitameGuitarTabs(String tab_url){
+        String tabsString = NOTABSFOUND;
         try {
             URL url = new URL(tab_url);
             //get and parse html
@@ -117,34 +139,37 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             Document tabDoc = Jsoup.parse(tabReply);
             Elements preElements = tabDoc.getElementsByTag("pre");
             List<Node> tabElements = null;
-            for (Element element : preElements){
-                int nchilds = element.childNodeSize();
-                if (nchilds > 0){
+            for (Element element : preElements) {
+                if (element.childNodeSize() > 0) {
                     tabElements = element.childNodes();
+                    break;
                 }
             }
             //TODO: tabElements is a list of elements including either text or a list of childnodes with the chords
-            return (String[]) tabs.toArray();
+            tabsString = ExtractTabsFromElement(tabElements);
+            String[] tabsStringArray = tabsString.split("\n");
+            tabslines = new Tabslines[tabsStringArray.length];
+            for (int i = 0; i < tabslines.length; i++){
+                tabslines[i] = new Tabslines();
+                tabslines[i].setText(tabsStringArray[i]);
+            }
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            return new String[]{NOTABSFOUND};
         }
     }
 
-    private String[] UltimateGuitarTabs(){
+    private void UltimateGuitarTabs(){
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
-            return new String[]{NOTABSFOUND};
+            return;
         }
-        new TextViewComponentUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching Ultimate Guitar tabs");
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching ULtimate Guitar tabs");
 
         // search for tabs on ultimate guitar tabs
         String tab_url = SearchUltimateGuitarTabs();
-        if (!tab_url.equals("no_tabs_found")){
-            String tabs[] = GetUltitameGuitarTabs(tab_url);
-            return tabs;
-        } else {
-            return new String[]{NOTABSFOUND};
+        if (!tab_url.equals("no_tabs_found")) {
+            GetUltitameGuitarTabs(tab_url);
+            publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Found tabs on ultimate guitar tabs");
         }
     }
 
@@ -161,7 +186,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         activity.setLines(new String[]{"No file found on server"," "," "," "," "," "," "," "});
 
         // Search  Ultimate guitar tabs
-        String[] tabs = UltimateGuitarTabs();
+        UltimateGuitarTabs(); //TODO: should return an array of Tabslines to be analysed later.
+
         // Handle no tabs found
         // Search Genius.com
         // Search Azlyrics.com

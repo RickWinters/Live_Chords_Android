@@ -159,8 +159,8 @@ public class HelperMethods {
         title = title.replace(")", "");
         title = title.replace("[","");
         title = title.replace("]","");
-        //title = title.replace("live", "");
-        //title = title.replace("Live", "");
+        title = title.replace("_live", "");
+        title = title.replace("_Live", "");
         title = title.replace("\'", "");
         title = title.replace("Version", "");
         title = title.replace("version", "");
