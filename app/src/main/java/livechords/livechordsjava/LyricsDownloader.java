@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.stream.JsonReader;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
@@ -17,6 +18,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
@@ -33,8 +35,10 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     private WeakReference<MainActivity> activityWeakReference;
     private Tabsfile tabsfile;
     private Tabslines[] tabslines;
+    private String[] lyrics;
     private int recursioncounter = 0;
     public static final String NOTABSFOUND = "no_tabs_found";
+    private static final String USER_CLIENT = "Mozilla/5.0 (Linux; U; Android 6.0.1; ko-kr; Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
 
 
     private int[] views = {R.id.Lyrics_line_1, R.id.Lyrics_line_2, R.id.Lyrics_line_3, R.id.Lyrics_line_4, R.id.Lyrics_line_5, R.id.Lyrics_line_6, R.id.Lyrics_line_7, R.id.Lyrics_line_8};
@@ -59,6 +63,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         recursioncounter--;
         return tabs.toString();
     }//TODO: ANALYSIS OF THE ELEMENTS COULD BE BETTER, NOW IT RETURNS A NEW STRING FOR EVERY SEPERATE ELEMENT.
+
+
 
     private String SearchUltimateGuitarTabs(){
         MainActivity activity = activityWeakReference.get();
@@ -173,6 +179,82 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         }
     }
 
+    private void GeniusLyrics(){
+        MainActivity activity = activityWeakReference.get();
+        if(activity == null || activity.isFinishing()){
+            return;
+        }
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching lyrics on genius.com");
+
+        String[] artisttitle = HelperMethods.cleanArtistTitleString(tabsfile.getArtist(), tabsfile.getTitle());
+        String artist = artisttitle[0].replace("_","%20").trim();
+        String title = artisttitle[1].replace("_", "%20").trim();
+
+        String searchurl = "https://api.genius.com/search?q="+artist+"%20"+title;
+        Connection connection = Jsoup.connect(searchurl)
+                .header("Authorization", "Bearer utx2qbckGnPCuScF4t4WAzP-Po6FIfWI1bOxY8M4-DvVmIkL31iMHLSL02ic01B1")
+                .timeout(0)
+                .ignoreContentType(true);
+        Document doc = null;
+        try {
+            doc = connection.userAgent(USER_CLIENT).get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Elements bodyelements = doc.getElementsByTag("body");
+        Element body = bodyelements.first();
+        String JsonString = body.text();
+
+        Gson gson = new Gson();
+        JsonReader reader = new JsonReader(new StringReader(JsonString));
+        reader.setLenient(true);
+        LinkedTreeMap map = gson.fromJson(reader, LinkedTreeMap.class);
+        LinkedTreeMap responsemap = (LinkedTreeMap) map.get("response");
+        ArrayList hitslist = (ArrayList) responsemap.get("hits");
+        String api_path = null;
+        String lyrics_url = null;
+        Boolean found = false;
+        for (Object item : hitslist){
+            LinkedTreeMap hit = (LinkedTreeMap) item;
+            LinkedTreeMap result = (LinkedTreeMap) hit.get("result");
+            String resultTitle = (String) result.get("title");
+            resultTitle = HelperMethods.cleanTitleString(resultTitle);
+            String tabsfiletitle = HelperMethods.cleanTitleString(tabsfile.getTitle()).replace("_"," ");
+            if (resultTitle.equals(tabsfiletitle)){
+                api_path = (String) result.get("api_path");
+                lyrics_url = (String) result.get("url");
+                found = true;
+                break;
+            }
+        }
+
+        connection = Jsoup.connect(lyrics_url)
+                .header("Authorization", "Bearer utx2qbckGnPCuScF4t4WAzP-Po6FIfWI1bOxY8M4-DvVmIkL31iMHLSL02ic01B1")
+                .timeout(0)
+                .ignoreContentType(true);
+        Document lyricsdoc = null;
+        try {
+            lyricsdoc = connection.userAgent(USER_CLIENT).get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Elements LyricsElements = lyricsdoc.getElementsByTag("p");
+        Element LyricsElement = LyricsElements.get(0);
+        List<TextNode> lyrics_list = LyricsElement.textNodes();
+        lyrics = new String[lyrics_list.size()];
+        for (int i = 0; i < lyrics_list.size(); i++){
+            lyrics[i] = lyrics_list.get(i).text();
+        }
+        StringBuilder lyricsstring = new StringBuilder();
+        for (String line : lyrics){
+            lyricsstring.append(line+"\n");
+        }
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, lyricsstring.toString());
+
+        System.out.println(lyricsdoc);
+    }
+
+
     @Override
     protected Object doInBackground(Tabsfile... tabsfiles) {
         Log.d(TAG, "doInBackground() called with: tabsfiles = [" + tabsfiles[0].toString() + "]");
@@ -187,6 +269,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
         // Search  Ultimate guitar tabs
         UltimateGuitarTabs(); //TODO: should return an array of Tabslines to be analysed later.
+
+        GeniusLyrics();
 
         // Handle no tabs found
         // Search Genius.com

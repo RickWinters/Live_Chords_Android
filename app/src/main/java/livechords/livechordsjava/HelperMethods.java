@@ -151,6 +151,30 @@ public class HelperMethods {
         return response.toString();
     }
 
+    public static String cleanTitleString(String title){
+        title = title.replace("acoustic", "");
+        title = title.replace("Acoustic", "");
+        title = title.replace("-", "");
+        title = title.replace("(", "");
+        title = title.replace(")", "");
+        title = title.replace("[","");
+        title = title.replace("]","");
+        title = title.replace("_live", "");
+        title = title.replace("_Live", "");
+        title = title.replace("\'", "");
+        title = title.replace("Version", "");
+        title = title.replace("version", "");
+        title = title.replace(".", "");
+        title = title.replace("é", "e");
+        title = title.replace("ê", "e");
+        title = title.replace("mono", "");
+        title = title.replace("Mono", "");
+        title = title.replace("'","");
+        title = title.trim();
+
+        return title;
+    }
+
     public static String[] cleanArtistTitleString(String artist, String title){
         title = title.replace("acoustic", "");
         title = title.replace("Acoustic", "");
@@ -169,6 +193,7 @@ public class HelperMethods {
         title = title.replace("ê", "e");
         title = title.replace("mono", "");
         title = title.replace("Mono", "");
+        title = title.replace("'","");
         artist = artist.replace("?", "");
         artist = artist.replace("!", "");
         artist = artist.replace("'", "");
