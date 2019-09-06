@@ -255,6 +255,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     }
 
 
+
     @Override
     protected Object doInBackground(Tabsfile... tabsfiles) {
         Log.d(TAG, "doInBackground() called with: tabsfiles = [" + tabsfiles[0].toString() + "]");
