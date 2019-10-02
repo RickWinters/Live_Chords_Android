@@ -35,12 +35,15 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     private WeakReference<MainActivity> activityWeakReference;
     private Tabsfile tabsfile;
     private Tabslines[] tabslines;
-    private String[] lyrics;
+    private String[] lyrics = new String[]{NOTABSFOUND};
+
+    private boolean found_tabs = false;
+    private boolean found_lyrics = false;
+
     private int recursioncounter = 0;
+
     public static final String NOTABSFOUND = "no_tabs_found";
     private static final String USER_CLIENT = "Mozilla/5.0 (Linux; U; Android 6.0.1; ko-kr; Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
-
-
     private int[] views = {R.id.Lyrics_line_1, R.id.Lyrics_line_2, R.id.Lyrics_line_3, R.id.Lyrics_line_4, R.id.Lyrics_line_5, R.id.Lyrics_line_6, R.id.Lyrics_line_7, R.id.Lyrics_line_8};
 
     public LyricsDownloader(MainActivity activity){
@@ -48,6 +51,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     }
 
     private String ExtractTabsFromElement(List<Node> tabElements){
+        Log.d(TAG, "ExtractTabsFromElement() called with: tabElements = [" + tabElements + "]");
         recursioncounter++;
         StringBuilder tabs = new StringBuilder();
         for (Node element: tabElements){
@@ -64,9 +68,24 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         return tabs.toString();
     }//TODO: ANALYSIS OF THE ELEMENTS COULD BE BETTER, NOW IT RETURNS A NEW STRING FOR EVERY SEPERATE ELEMENT.
 
-
+    private String ExtractLyricsFromelements(List<Node> lyricsElements){
+        Log.d(TAG, "ExtractLyricsFromelements() called with: lyricsElements = [" + lyricsElements + "]");
+        StringBuilder lyrics = new StringBuilder();
+        for (Node element: lyricsElements){
+            if (element.getClass()==TextNode.class){
+                lyrics.append(((TextNode) element).getWholeText());
+                lyrics.append("\n");
+            } else {
+                List<Node> Newlist = element.childNodes();
+                String temp = ExtractLyricsFromelements(Newlist);
+                lyrics.append(temp);
+            }
+        }
+        return lyrics.toString();
+    }
 
     private String SearchUltimateGuitarTabs(){
+        Log.d(TAG, "SearchUltimateGuitarTabs() called");
         MainActivity activity = activityWeakReference.get();
         if (activity == null || activity.isFinishing()){
             return null;
@@ -137,7 +156,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     }
 
     private void GetUltitameGuitarTabs(String tab_url){
-        String tabsString = NOTABSFOUND;
+        Log.d(TAG, "GetUltitameGuitarTabs() called with: tab_url = [" + tab_url + "]");
         try {
             URL url = new URL(tab_url);
             //get and parse html
@@ -151,8 +170,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
                     break;
                 }
             }
-            //TODO: tabElements is a list of elements including either text or a list of childnodes with the chords
-            tabsString = ExtractTabsFromElement(tabElements);
+            String tabsString = ExtractTabsFromElement(tabElements); // returns one string of all the chords and lyrics, seperated by a newline
             String[] tabsStringArray = tabsString.split("\n");
             tabslines = new Tabslines[tabsStringArray.length];
             for (int i = 0; i < tabslines.length; i++){
@@ -165,27 +183,25 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     }
 
     private void UltimateGuitarTabs(){
-        MainActivity activity = activityWeakReference.get();
-        if (activity == null || activity.isFinishing()){
-            return;
-        }
+        Log.d(TAG, "UltimateGuitarTabs() called");
         publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching ULtimate Guitar tabs");
 
         // search for tabs on ultimate guitar tabs
         String tab_url = SearchUltimateGuitarTabs();
-        if (!tab_url.equals("no_tabs_found")) {
+        if (!tab_url.equals(NOTABSFOUND)) {
             GetUltitameGuitarTabs(tab_url);
             publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Found tabs on ultimate guitar tabs");
+            found_tabs = true;
+        } else {
+            tabslines = new Tabslines[1];
+            tabslines[0] = new Tabslines();
+            tabslines[0].setText(NOTABSFOUND);
         }
     }
 
-    private void GeniusLyrics(){
-        MainActivity activity = activityWeakReference.get();
-        if(activity == null || activity.isFinishing()){
-            return;
-        }
-        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching lyrics on genius.com");
-
+    private String SearchGenuisLyrics(){
+        Log.d(TAG, "SearchGenuisLyrics() called");
+        String lyrics_url = NOTABSFOUND;
         String[] artisttitle = HelperMethods.cleanArtistTitleString(tabsfile.getArtist(), tabsfile.getTitle());
         String artist = artisttitle[0].replace("_","%20").trim();
         String title = artisttitle[1].replace("_", "%20").trim();
@@ -211,9 +227,6 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         LinkedTreeMap map = gson.fromJson(reader, LinkedTreeMap.class);
         LinkedTreeMap responsemap = (LinkedTreeMap) map.get("response");
         ArrayList hitslist = (ArrayList) responsemap.get("hits");
-        String api_path = null;
-        String lyrics_url = null;
-        Boolean found = false;
         for (Object item : hitslist){
             LinkedTreeMap hit = (LinkedTreeMap) item;
             LinkedTreeMap result = (LinkedTreeMap) hit.get("result");
@@ -221,14 +234,16 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             resultTitle = HelperMethods.cleanTitleString(resultTitle);
             String tabsfiletitle = HelperMethods.cleanTitleString(tabsfile.getTitle()).replace("_"," ");
             if (resultTitle.equals(tabsfiletitle)){
-                api_path = (String) result.get("api_path");
                 lyrics_url = (String) result.get("url");
-                found = true;
                 break;
             }
         }
+        return lyrics_url;
+    }
 
-        connection = Jsoup.connect(lyrics_url)
+    private void GetGeniusLyrics(String lyrics_url){
+        Log.d(TAG, "GetGeniusLyrics() called with: lyrics_url = [" + lyrics_url + "]");
+        Connection connection = Jsoup.connect(lyrics_url)
                 .header("Authorization", "Bearer utx2qbckGnPCuScF4t4WAzP-Po6FIfWI1bOxY8M4-DvVmIkL31iMHLSL02ic01B1")
                 .timeout(0)
                 .ignoreContentType(true);
@@ -239,22 +254,104 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             e.printStackTrace();
         }
         Elements LyricsElements = lyricsdoc.getElementsByTag("p");
-        Element LyricsElement = LyricsElements.get(0);
-        List<TextNode> lyrics_list = LyricsElement.textNodes();
-        lyrics = new String[lyrics_list.size()];
-        for (int i = 0; i < lyrics_list.size(); i++){
-            lyrics[i] = lyrics_list.get(i).text();
-        }
-        StringBuilder lyricsstring = new StringBuilder();
-        for (String line : lyrics){
-            lyricsstring.append(line+"\n");
-        }
-        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, lyricsstring.toString());
+        List<Node> LyricsElement = LyricsElements.get(0).childNodes();
+        String lyrics_string = ExtractLyricsFromelements(LyricsElement);
+        lyrics = lyrics_string.split("\n");
 
-        System.out.println(lyricsdoc);
+
     }
 
+    private void GeniusLyrics(){
+        // this method handles searching lyrics on Genius and than tries to download the lyrics and puts them in class wide String[] lyrics
+        Log.d(TAG, "GeniusLyrics() called");
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Searching lyrics on Genius.com");
 
+        String lyrics_url = SearchGenuisLyrics();
+        if(!lyrics_url.equals(NOTABSFOUND)){
+            GetGeniusLyrics(lyrics_url);
+            publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Found lyrics on Genius.com");
+            found_lyrics = true;
+        } else {
+            publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "No lyrics found, stopping search");
+        }
+    }
+
+    private void FindLyricsInTabslines(){//This method will analyze the lyrics[] and tabslines[] and mark which Tabslines are lyrics
+        String[] keywords = new String[]{"verse","chorus","interlude","instrumental","bridge","intro","outro","ad-libs","adlibs"};
+        Log.d(TAG, "FindLyricsInTabslines() called");
+        int lyrics_index = 0;
+        int tabslines_index = 0;
+        boolean end = false;
+
+        outerloop: for (lyrics_index = 0; lyrics_index < lyrics.length; lyrics_index++){
+            String lyrics_text = HelperMethods.cleanlyricsComparingString(lyrics[lyrics_index], true);
+            String double_lyrics_text = "";
+            String triple_lyrics_text = "";
+
+            //check if lyrics_text is not Empty
+            if(lyrics_text.equals("")){
+                continue;
+            }
+
+            //check if the lyricsline contains any of the keywords, if so skip this lyrics line
+            for (String keyword : keywords){
+                if (lyrics_text.toLowerCase().contains(keyword)){
+                    continue outerloop;
+                }
+            }
+
+            // create a double_lyrics_text because sometimes the tabslines_lyrics migt be equal to two lines of lyrics. this needs to be counted as lyrics
+            // or triple (Chasing Cars, Snow Patrol -_-, seriously this is a mess)
+            if(lyrics_index < lyrics.length-1){
+                double_lyrics_text = lyrics_text + HelperMethods.cleanlyricsComparingString(lyrics[lyrics_index+1], true);
+            }
+            if(lyrics_index < lyrics.length-2){
+                triple_lyrics_text = double_lyrics_text + HelperMethods.cleanlyricsComparingString(lyrics[lyrics_index+2], true);
+            }
+
+            // check the tabslines to see if they are equal
+            tabslines_whileloop: while (tabslines_index < tabslines.length){
+                String tabslines_text = HelperMethods.cleanlyricsComparingString(tabslines[tabslines_index].getText(), false);
+                //check if the tabslines is empty, if so continue with next
+                if(tabslines_text.length()==0){
+                    tabslines_index++;
+                    continue;
+                }
+
+                //check if the tabslines are any keywords, if so mark it as keyword and continue with next
+                for (String keyword : keywords){
+                    if (tabslines_text.contains(keyword)){
+                        tabslines[tabslines_index].setKeyword(true);
+                        tabslines_index++;
+                        continue tabslines_whileloop;
+                    }
+                }
+
+                // set the tabslines_text to lowercase if its longer than 5 characters.
+                if(tabslines_text.length()>5){
+                    tabslines_text = tabslines_text.toLowerCase();
+                }
+
+                if (lyrics_text.contains(tabslines_text)) {
+                    tabslines[tabslines_index].setLyrics(true);
+                    break;
+                } else if (double_lyrics_text.contains(tabslines_text)) {
+                    tabslines[tabslines_index].setLyrics(true);
+                    lyrics_index++;
+                    break;
+                } else if (triple_lyrics_text.contains(tabslines_text)) {
+                    tabslines[tabslines_index].setLyrics(true);
+                    lyrics_index++;
+                    lyrics_index++;
+                    break;
+                }
+
+                //int difference = HelperMethods.LevenshteinDistance(lyrics_text, lyrics_text.length(), tabslines_text, tabslines_text.length());
+                float difference = HelperMethods.stringCompare(lyrics_text, tabslines_text);
+                tabslines_index++;
+            }
+        }
+    }
 
     @Override
     protected Object doInBackground(Tabsfile... tabsfiles) {
@@ -269,10 +366,14 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         activity.setLines(new String[]{"No file found on server"," "," "," "," "," "," "," "});
 
         // Search  Ultimate guitar tabs
-        UltimateGuitarTabs(); //TODO: should return an array of Tabslines to be analysed later.
+        UltimateGuitarTabs(); //First calls searchUltimateGuitartabs which returns a string NOTABSFOUND or a link. Than opens the link to download the tabs to class variable tabslines[]
+        if(! ( (String)tabslines[0].getText() ).equals(NOTABSFOUND) ){
+            GeniusLyrics();
+        }
 
-        GeniusLyrics();
-
+        if(found_lyrics && found_tabs){
+            FindLyricsInTabslines();
+        }
         // Handle no tabs found
         // Search Genius.com
         // Search Azlyrics.com
@@ -288,4 +389,5 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         }
         new TextViewComponentUpdater(activity).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, values);
     }
+
 }

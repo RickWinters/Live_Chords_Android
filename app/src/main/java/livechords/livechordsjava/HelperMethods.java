@@ -14,6 +14,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -151,6 +152,33 @@ public class HelperMethods {
         return response.toString();
     }
 
+    public static String cleanlyricsComparingString(String lyrics, boolean lower){
+        lyrics = lyrics.replace("acoustic", "");
+        lyrics = lyrics.replace("Acoustic", "");
+        lyrics = lyrics.replace("-", "");
+        lyrics = lyrics.replace("(", "");
+        lyrics = lyrics.replace(")", "");
+        lyrics = lyrics.replace("[","");
+        lyrics = lyrics.replace("]","");
+        lyrics = lyrics.replace("_live", "");
+        lyrics = lyrics.replace("_Live", "");
+        lyrics = lyrics.replace("\'", "");
+        lyrics = lyrics.replace("Version", "");
+        lyrics = lyrics.replace("version", "");
+        lyrics = lyrics.replace(".", "");
+        lyrics = lyrics.replace("é", "e");
+        lyrics = lyrics.replace("ê", "e");
+        lyrics = lyrics.replace("mono", "");
+        lyrics = lyrics.replace("Mono", "");
+        lyrics = lyrics.replace("'","");
+        lyrics = lyrics.replace(" ","");
+        lyrics = lyrics.replace(",","");
+        lyrics = lyrics.trim();
+        if(lower) lyrics = lyrics.toLowerCase();
+
+        return lyrics;
+    }
+
     public static String cleanTitleString(String title){
         title = title.replace("acoustic", "");
         title = title.replace("Acoustic", "");
@@ -216,5 +244,56 @@ public class HelperMethods {
         title = title.replace(")"," ");
 
         return new String[]{artist, title};
+    }
+
+    public static int LevenshteinDistance(String str1, int len1, String str2, int len2){
+        int cost = 0;
+        //base case: empty strings
+        if(len1==0) return 0;
+        if(len2==0) return 0;
+
+        //test if last characters of strings match
+        if(str1.substring(len1-1).equals(str2.substring(len2-1))){
+            cost = 0;
+        } else {
+            cost = 1;
+        }
+
+        int[] values = new int[]{
+                LevenshteinDistance(str1, len1-1, str2, len2)+1,
+                LevenshteinDistance(str1, len1, str2, len2-1)+1,
+                LevenshteinDistance(str1, len1-1, str2, len2-1)+cost};
+
+        Arrays.sort(values);
+        return values[0];
+    }
+
+    public static float stringCompare(String str1, String str2)
+    {
+        int value1 = 0;
+        for (char letter : str1.toCharArray()){
+            value1 += letter;
+        }
+
+        int value2 = 0;
+        for (char letter: str2.toCharArray()){
+            value2 += letter;
+        }
+
+        int difference1 = str1.compareTo(str2);
+        int difference2 = str2.compareTo(str1);
+
+        float rel1 = ((float) difference1)/((float) value1);
+        float rel2 = ((float) difference2)/((float) value2);
+
+        float max = (float) 0.0;
+
+        if (rel1>rel2){
+            max = rel1;
+        } else {
+            max = rel2;
+        }
+
+        return max;
     }
 }
