@@ -36,7 +36,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.spotify.sdk:spotify-auth-release:1.1.0@aar'
     //implementation 'com.spotify.sdk:spotify-app-remote-release-0.6.2@aar'
-    implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'org.jsoup:jsoup:1.12.1'
 }

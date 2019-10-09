@@ -26,15 +26,17 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import livechords.livechordsjava.Model.Chorded_lyrics;
 import livechords.livechordsjava.Model.Tabsfile;
 import livechords.livechordsjava.Model.Tabslines;
 
 public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
-    private static final String TAG = "MYDEBUF_lyricsgetter";
+    private static final String TAG = "MYDEBUG_lyricsgetter";
     private WeakReference<MainActivity> activityWeakReference;
     private Tabsfile tabsfile;
-    private Tabslines[] tabslines;
+    private ArrayList<Tabslines> tabslines = new ArrayList<>();
+    private ArrayList<Chorded_lyrics> chorded_lyrics = new ArrayList<>();
     private String[] lyrics = new String[]{NOTABSFOUND};
 
     private boolean found_tabs = false;
@@ -66,7 +68,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         }
         recursioncounter--;
         return tabs.toString();
-    }//TODO: ANALYSIS OF THE ELEMENTS COULD BE BETTER, NOW IT RETURNS A NEW STRING FOR EVERY SEPERATE ELEMENT.
+    }//
 
     private String ExtractLyricsFromelements(List<Node> lyricsElements){
         Log.d(TAG, "ExtractLyricsFromelements() called with: lyricsElements = [" + lyricsElements + "]");
@@ -172,10 +174,9 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             }
             String tabsString = ExtractTabsFromElement(tabElements); // returns one string of all the chords and lyrics, seperated by a newline
             String[] tabsStringArray = tabsString.split("\n");
-            tabslines = new Tabslines[tabsStringArray.length];
-            for (int i = 0; i < tabslines.length; i++){
-                tabslines[i] = new Tabslines();
-                tabslines[i].setText(tabsStringArray[i]);
+            for (int i = 0; i < tabslines.size(); i++){
+                tabslines.add(new Tabslines());
+                tabslines.get(i).setText(tabsStringArray[i]);
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -193,9 +194,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Found tabs on ultimate guitar tabs");
             found_tabs = true;
         } else {
-            tabslines = new Tabslines[1];
-            tabslines[0] = new Tabslines();
-            tabslines[0].setText(NOTABSFOUND);
+            tabslines.add(new Tabslines());
+            tabslines.get(0).setText(NOTABSFOUND);
         }
     }
 
@@ -283,7 +283,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         int tabslines_index = 0;
         boolean end = false;
 
-        outerloop: for (lyrics_index = 0; lyrics_index < lyrics.length; lyrics_index++){
+        outerloop: for (lyrics_index = 0; lyrics_index < lyrics.length; lyrics_index++){ //loop over all the lyrics
             String lyrics_text = HelperMethods.cleanlyricsComparingString(lyrics[lyrics_index], true);
             String double_lyrics_text = "";
             String triple_lyrics_text = "";
@@ -310,8 +310,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             }
 
             // check the tabslines to see if they are equal
-            tabslines_whileloop: while (tabslines_index < tabslines.length){
-                String tabslines_text = HelperMethods.cleanlyricsComparingString(tabslines[tabslines_index].getText(), false);
+            tabslines_whileloop: while (tabslines_index < tabslines.size()){
+                String tabslines_text = HelperMethods.cleanlyricsComparingString(tabslines.get(tabslines_index).getText(), false);
                 //check if the tabslines is empty, if so continue with next
                 if(tabslines_text.length()==0){
                     tabslines_index++;
@@ -320,37 +320,69 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
                 //check if the tabslines are any keywords, if so mark it as keyword and continue with next
                 for (String keyword : keywords){
-                    if (tabslines_text.contains(keyword)){
-                        tabslines[tabslines_index].setKeyword(true);
+                    if (tabslines_text.toLowerCase().contains(keyword)){
+                        tabslines.get(tabslines_index).setKeyword(true);
                         tabslines_index++;
                         continue tabslines_whileloop;
                     }
                 }
 
                 // set the tabslines_text to lowercase if its longer than 5 characters.
+                // the lyrics are usually longer than 5 characters and chords should be in capital letter.
                 if(tabslines_text.length()>5){
                     tabslines_text = tabslines_text.toLowerCase();
                 }
+                // TODO: PUT LOWER TODO IN SUCH A WAY THAT IF A LYRICS LINE EQUALS 2 SEQUENTIAL TABSLINES LYRICS (ARE OTHERWAY AROUND) AR NOT SKIPPED.
 
-                if (lyrics_text.contains(tabslines_text)) {
-                    tabslines[tabslines_index].setLyrics(true);
-                    break;
-                } else if (double_lyrics_text.contains(tabslines_text)) {
-                    tabslines[tabslines_index].setLyrics(true);
+                // TODO: DEFINE METHOD THAT RETURNS A VALUE BETWEEN 0 AND 1 REPRESENTING THE SIMILARITY OF 2 STRINGS, WHERE A VALUE OF 1 IS EXACTLY SIMILAR.
+                // AND THAN SET TABSLINES.LYRICS TO TRUE IF SIMILARITY > 0.8 (EXAMPLE). THIS TO ENSURE 2 STRINGS WHICH DIFFER ONLY SLIGHLY, ARE ALSO MARKED AS LYRICS
+                double similarity = HelperMethods.similarity(lyrics_text, tabslines_text);
+                double doublesimilarity = HelperMethods.similarity(double_lyrics_text, tabslines_text);
+                double triplesimilarity = HelperMethods.similarity(triple_lyrics_text, tabslines_text);
+                if (similarity > 0.8) {
+                    tabslines.get(tabslines_index).setLyrics(true);
+                    Log.d(TAG, "FindLyricsInTabslines: matched ["+lyrics_text+"] and ["+tabslines_text+"]");
+                    continue outerloop;
+                } else if (doublesimilarity > 0.8) {
+                    tabslines.get(tabslines_index).setLyrics(true);
                     lyrics_index++;
-                    break;
-                } else if (triple_lyrics_text.contains(tabslines_text)) {
-                    tabslines[tabslines_index].setLyrics(true);
+                    Log.d(TAG, "FindLyricsInTabslines: matched ["+double_lyrics_text+"] and ["+tabslines_text+"]");
+                    continue outerloop;
+                } else if (triplesimilarity > 0.8) {
+                    tabslines.get(tabslines_index).setLyrics(true);
                     lyrics_index++;
                     lyrics_index++;
-                    break;
+                    Log.d(TAG, "FindLyricsInTabslines: matched ["+triple_lyrics_text+"] and ["+tabslines_text+"]");
+                    continue outerloop;
                 }
-
-                //int difference = HelperMethods.LevenshteinDistance(lyrics_text, lyrics_text.length(), tabslines_text, tabslines_text.length());
-                float difference = HelperMethods.stringCompare(lyrics_text, tabslines_text);
                 tabslines_index++;
             }
         }
+        System.out.println("test");
+    }//Marks all the elements in tabslines[] as lyrics when comparing to lyrics[]
+
+    private void CreateChordedLyrics(){
+        Log.d(TAG, "CreateChordedLyrics() called");
+        String chords = "";
+        String Lyrics = "";
+        int chorded_lyrics_index = 0;
+        for (Tabslines tabsline : tabslines){
+            if (tabsline.isLyrics()) {
+                chorded_lyrics.add(new Chorded_lyrics(tabsline.getText(), 0, 0, tabsline.getGroup(), chords, 0));
+                chorded_lyrics_index++;
+                chords = "";
+            } else if (tabsline.isKeyword()){
+                chorded_lyrics.add(new Chorded_lyrics("", 0, 0, tabsline.getGroup(), chords, 0));
+                chorded_lyrics_index++;
+                chorded_lyrics.add(new Chorded_lyrics(tabsline.getText(), 0, 0, tabsline.getGroup(), "",0));
+                chorded_lyrics_index++;
+                chords = "";
+            } else {
+                chords += tabsline.getText();
+            }
+        }
+
+        System.out.println("test");
     }
 
     @Override
@@ -367,12 +399,13 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
         // Search  Ultimate guitar tabs
         UltimateGuitarTabs(); //First calls searchUltimateGuitartabs which returns a string NOTABSFOUND or a link. Than opens the link to download the tabs to class variable tabslines[]
-        if(! ( (String)tabslines[0].getText() ).equals(NOTABSFOUND) ){
+        if(! ( (String) tabslines.get(0).getText() ).equals(NOTABSFOUND) ){
             GeniusLyrics();
         }
 
         if(found_lyrics && found_tabs){
             FindLyricsInTabslines();
+            CreateChordedLyrics();
         }
         // Handle no tabs found
         // Search Genius.com
