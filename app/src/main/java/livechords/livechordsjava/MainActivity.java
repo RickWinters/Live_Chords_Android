@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static final String KEY_titleText = "titleText_key";
     public static final String KEY_lines = "lines_key";
     public static final String KEY_spotifyLoginButtonText = "spotifyLoginButtonText_key";
+    public static final String version = "2019-10-11";
 
     //DATA FOR SPOTIFY CONNECTION
     private String accesToken = "";
@@ -198,11 +199,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         GetLyrics(currentArtist, currentTitle);
         titleText = currentArtist.replace("_", " ") + "\n" + currentTitle.replace("_", " ");
         new TextViewComponentUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, R.id.Lyrics_Title, TextViewComponentUpdater.COMMAND_TEXT, titleText);
-        if (tabsfile.isHas_tabs() && tabsfile.isHas_azlyrics()) {
-            new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
-        } else {
+        if (!tabsfile.isHas_azlyrics() && !tabsfile.isHas_tabs()){
             new LyricsDownloader(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile);
         }
+        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
+
     }
 
     public void UpdateLyricsButton(View view) {
@@ -296,6 +297,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toast.makeText(this, "User " + accountName + " still logged in", Toast.LENGTH_LONG).show();
     }
 
+    public void UploadNewTabsfile(){
+        new ServerConnection().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "saveLyrics", tabsfile);
+        new LyricsUpdater(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, tabsfile, currentSong);
+    }
+
     //SETTERS
     public void setCurrentArtist(String currentArtist) {
         Log.d(TAG, "setCurrentArtist() called with: currentArtist = [" + currentArtist + "]");
@@ -317,5 +323,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public void setLines(String[] lines) {
         this.lines = lines;
+    }
+
+    public void setTabsfile(Tabsfile tabsfile){
+        this.tabsfile = tabsfile;
+
+        System.out.println("test");
+
     }
 }

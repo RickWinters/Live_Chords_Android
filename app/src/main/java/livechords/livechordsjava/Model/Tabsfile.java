@@ -1,6 +1,8 @@
 package livechords.livechordsjava.Model;
 
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -91,6 +93,12 @@ public class Tabsfile {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public String toJsonObject(){
+        Gson gson = new Gson();
+        String json = gson.toJson(this);
+        return json;
     }
 
     //GETTERS - SETTERS

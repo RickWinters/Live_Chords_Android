@@ -36,8 +36,10 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     private WeakReference<MainActivity> activityWeakReference;
     private Tabsfile tabsfile;
     private ArrayList<Tabslines> tabslines = new ArrayList<>();
+    private String tabs;
     private ArrayList<Chorded_lyrics> chorded_lyrics = new ArrayList<>();
     private String[] lyrics = new String[]{NOTABSFOUND};
+
 
     private boolean found_tabs = false;
     private boolean found_lyrics = false;
@@ -172,8 +174,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
                     break;
                 }
             }
-            String tabsString = ExtractTabsFromElement(tabElements); // returns one string of all the chords and lyrics, seperated by a newline
-            String[] tabsStringArray = tabsString.split("\n");
+            tabs = ExtractTabsFromElement(tabElements); // returns one string of all the chords and lyrics, seperated by a newline
+            String[] tabsStringArray = tabs.split("\n");
             for (int i = 0; i < tabsStringArray.length; i++){
                 tabslines.add(new Tabslines());
                 tabslines.get(i).setText(tabsStringArray[i]);
@@ -278,6 +280,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
     private void FindLyricsInTabslines(){//This method will analyze the lyrics[] and tabslines[] and mark which Tabslines are lyrics
         String[] keywords = new String[]{"verse","chorus","interlude","instrumental","bridge","intro","outro","ad-libs","adlibs"};
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Comparing lyrics from both sides");
         Log.d(TAG, "FindLyricsInTabslines() called");
         int lyrics_index = 0;
         int tabslines_index = 0;
@@ -362,6 +365,8 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
     }//Marks all the elements in tabslines[] as lyrics when comparing to lyrics[]
 
     private void GroupTabslines(){
+        Log.d(TAG, "GroupTabslines() called");
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Grouping lyrics and chords together");
         String group = "start";
         int i = 0;
         Tabslines line = null;
@@ -387,6 +392,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
 
     private void CreateChordedLyrics(){
         Log.d(TAG, "CreateChordedLyrics() called");
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Finalizing efforts");
         String introtext = "";
         Boolean inintro = false;
         String starttext = "";
@@ -472,7 +478,7 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
                         passed += 1;
                     }
                     String group = line.getGroup();
-                    chorded_lyrics.add(new Chorded_lyrics(lyrics, 0, 0, chords, group, 0));
+                    chorded_lyrics.add(new Chorded_lyrics(lyrics, 0, 0, group, chords, 0));
                 }
                 if (line.isKeyword()){
                     passed = i;
@@ -482,6 +488,28 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
             i += 1;
         }
     }
+
+    private void CreateTabsfile(){
+        Log.d(TAG, "CreateTabsfile() called");
+        publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "Filing it all away");
+        tabsfile.setHas_azlyrics(true);
+        tabsfile.setHas_tabs(true);
+        tabsfile.setChorded_lyrics(chorded_lyrics);
+        tabsfile.setTabslines(tabslines);
+        tabsfile.setSynced(false);
+        tabsfile.setVersion("android");
+        tabsfile.setTabs(tabs);
+        tabsfile.setTabslines(tabslines);
+
+        ArrayList<String> azlyrics = new ArrayList<>();
+        for (String line : lyrics){
+            azlyrics.add(line);
+        }
+        tabsfile.setAzlyrics(azlyrics);
+    }
+
+    //TODO make a method to reorder the tabslines so they coincide with the tabslines as with the desktop version
+
 
     @Override
     protected Object doInBackground(Tabsfile... tabsfiles) {
@@ -499,18 +527,24 @@ public class LyricsDownloader extends AsyncTask<Tabsfile, Object, Object> {
         UltimateGuitarTabs(); //First calls searchUltimateGuitartabs which returns a string NOTABSFOUND or a link. Than opens the link to download the tabs to class variable tabslines[]
         if(! ( (String) tabslines.get(0).getText() ).equals(NOTABSFOUND) ){
             GeniusLyrics();
+        } else {
+            publishProgress(views[0], TextViewComponentUpdater.COMMAND_TEXT, "No tabs found, cancelling search. ");
         }
 
         if(found_lyrics && found_tabs){
             FindLyricsInTabslines();
             GroupTabslines();
             CreateChordedLyrics();
+            CreateTabsfile();
+            activity.setTabsfile(tabsfile);
+            activity.UploadNewTabsfile();
         }
         // Handle no tabs found
         // Search Genius.com
         // Search Azlyrics.com
         return null;
     }
+
 
     @Override
     protected void onProgressUpdate(Object... values) {

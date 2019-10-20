@@ -10,8 +10,11 @@ import com.google.gson.JsonParser;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import livechords.livechordsjava.Model.Tabsfile;
 
 public class HelperMethods {
     private static final String TAG = "MYDEBUG_HelperMethods";
@@ -150,6 +155,33 @@ public class HelperMethods {
         }
         Log.d(TAG, "GetReply() returned: " + response.toString());
         return response.toString();
+    }
+
+    public static void getResponse(URL url, Tabsfile tabsfile) {
+        Log.d(TAG, "getResponse() called with: url = [" + url + "], tabsfile = [" + tabsfile + "]");
+        StringBuilder response = new StringBuilder();
+        try {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setReadTimeout(5000);
+            connection.setReadTimeout(5000);
+            String json = tabsfile.toJsonObject();
+            connection.setRequestProperty("Content-Type", "application/json");
+            //connection.setRequestProperty("RequestBody", json);
+            OutputStream os = connection.getOutputStream();
+            OutputStreamWriter osw = new OutputStreamWriter(os, "utf-8");
+            osw.write(json);
+            connection.connect();
+
+            //connection.getInputStream();
+            int status = connection.getResponseCode();
+            Log.i(TAG, "Status = " + status);
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public static String cleanlyricsComparingString(String lyrics, boolean lower){

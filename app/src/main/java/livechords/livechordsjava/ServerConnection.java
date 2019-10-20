@@ -7,7 +7,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 
-public class ServerConnection extends AsyncTask<String, Void, String> {
+import livechords.livechordsjava.Model.Tabsfile;
+
+public class ServerConnection extends AsyncTask<Object, Void, String> {
     private static final String TAG = "MYDEBUG_ServeConnection";
     private String mainURL = "http://82.75.204.165:8081/live_chords/";
 
@@ -40,15 +42,30 @@ public class ServerConnection extends AsyncTask<String, Void, String> {
         return HelperMethods.getResponse(url);
     }
 
+    private void SaveLyrics(Tabsfile tabsfile){
+        Log.d(TAG, "SaveLyrics() called");
+        URL url = null;
+        try {
+            url = new URL(mainURL+"Save");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        HelperMethods.getResponse(url, tabsfile);
+    }
+
     @Override
-    public String doInBackground(String... strings) {
-        Log.d(TAG, "doInBackground() called with: strings = [" + Arrays.toString(strings) + "]");
-        String action = strings[0];
+    public String doInBackground(Object... Objects) {
+        Log.d(TAG, "doInBackground() called with: strings = [" + Arrays.toString(Objects) + "]");
+        String action = (String) Objects[0];
         String answer = "incorrect command";
         if (action.equals("getList")) {
             answer = getLyricsList();
-        } else if (action.equals("getLyrics"))
-            answer = getLyrics(strings[1], strings[2]);
+        } else if (action.equals("getLyrics")) {
+            answer = getLyrics((String) Objects[1], (String) Objects[2]);
+        } else if (action.equals("saveLyrics")){
+            SaveLyrics((Tabsfile) Objects[1]);
+            answer = "saved file on the server";
+        }
         Log.d(TAG, "doInBackground: Finished");
 
         return answer;
